@@ -2,43 +2,181 @@
 
 An end-to-end Real Estate CRM application engineered for sales teams to manage prospective buyers through a 7-stage pipeline, navigate hierarchical property inventories (Projects → Buildings → Units), and execute conflict-free unit bookings with **strict database-level concurrency protection** and **Role-Based Access Control (Admin vs. Sales Employee)**.
 
-Built with **Next.js (App Router, TypeScript)** and **Supabase (PostgreSQL, Row-Level Security, RPC Transactions)**.
+Built with **Next.js (App Router, Turbopack, TypeScript)**, **Tailwind CSS v4**, and **Supabase (PostgreSQL 15+, Row-Level Security, RPC Stored Procedures)**.
+
+---
+
+## Live Deployment & Repository
+
+- **Live Deployed Application**: [https://estateflow-crm.netlify.app](https://estateflow-crm.netlify.app) *(or your deployed Netlify URL)*
+- **GitHub Repository**: [https://github.com/Arumuga-Raja-p/real_estate_crm](https://github.com/Arumuga-Raja-p/real_estate_crm)
+
+---
+
+## Technology Stack
+
+| Layer | Technologies | Role & Architectural Purpose |
+| :--- | :--- | :--- |
+| **Frontend Framework** | **Next.js 16 (App Router, Turbopack)** | Server/Client hybrid architecture, fast Turbopack compilation, and modern routing. |
+| **UI Library & Language** | **React 19 & TypeScript 5** | Strict type safety across leads, property units, bookings, and database responses. |
+| **Styling & Design System** | **Tailwind CSS v4 & Lucide Icons** | Design tokens, glassmorphism headers, Poppins typography, dark/light theme switching. |
+| **UI Primitives** | **Base UI (`@base-ui/react`) & Sonner** | Accessible headless select, dialogs, and toast notifications for user interactions. |
+| **Cloud Database** | **Supabase (PostgreSQL 15+)** | Relational data integrity, Foreign Keys, cascading deletes, and connection pooling. |
+| **API & Data Access** | **Supabase PostgREST & `@supabase/ssr`** | Auto-generated REST APIs, type-safe RPC stored procedure executions, and real-time queries. |
+| **Deployment Platform** | **Netlify** | CI/CD Git-integrated production hosting with Next.js Runtime (`@netlify/plugin-nextjs`). |
+
+---
+
+## System Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    subgraph BrowserClient ["Frontend Client (Browser)"]
+        Pages["Next.js App Router Pages<br/>(/, /leads, /properties, /bookings)"]
+        UIComp["UI Components<br/>(Kanban, Filterable Tables, Modals)"]
+        Pages --> UIComp
+    end
+
+    subgraph ServiceLayer ["Application Service Layer (Client/Server)"]
+        CRMService["Unified CRM Service<br/>(src/lib/crm-service.ts)"]
+        InputSanitizer["Validation & UUID Sanitizer"]
+        UIComp -->|Call Methods| CRMService
+        CRMService --> InputSanitizer
+    end
+
+    subgraph BackendAPI ["Supabase Backend Gateway"]
+        SupaClient["@supabase/supabase-js Client"]
+        PostgREST["PostgREST RESTful API Gateway"]
+        InputSanitizer --> SupaClient
+        SupaClient -->|HTTPS REST & RPC| PostgREST
+    end
+
+    subgraph DatabaseEngine ["PostgreSQL 15+ Engine (Supabase Cloud)"]
+        RLS["Row Level Security (RLS) Layer"]
+        PostgREST --> RLS
+        
+        subgraph TablesAndProcs ["Database Storage & Procedures"]
+            Tables["Relational Tables:<br/>• projects<br/>• buildings<br/>• units<br/>• leads<br/>• lead_notes<br/>• bookings<br/>• profiles"]
+            RPCProc["Stored Procedure:<br/>book_unit_atomic()"]
+            RowLock["FOR UPDATE<br/>Pessimistic Row Lock"]
+        end
+        
+        RLS --> Tables
+        RLS --> RPCProc
+        RPCProc --> RowLock
+    end
+
+    Tables -->|JSON Response| CRMService
+    RPCProc -->|Confirmation / Conflict Error| CRMService
+    CRMService -->|Reactive State Update| UIComp
+```
+
+---
+
+## How the Backend & Database Interact
+
+The backend leverages a **Service-Oriented Architecture** via `crmService` ([`src/lib/crm-service.ts`](file:///d:/Realstate%20CRM/src/lib/crm-service.ts)):
+
+1. **Client Initialization**: A browser-safe client is instantiated using `@supabase/ssr` and `.env.local` credentials (`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
+2. **Relational Joins (No N+1 Queries)**: Complex hierarchies are queried in a single round-trip using Supabase's foreign key syntax:
+   ```typescript
+   const { data } = await supabase
+     .from('units')
+     .select('*, building:buildings(*, project:projects(*))')
+     .order('unit_number');
+   ```
+3. **Input Sanitization & Type Coercion**: Before executing write operations, data payloads pass through UUID regex validation to ensure foreign keys (`assigned_to`, `building_id`, `lead_id`) never trigger PostgreSQL cast exceptions.
+4. **Zero-Config Resilient Fallback**: If cloud connectivity is temporarily offline, `crmService` automatically falls back to an in-memory reactive store, ensuring uninterrupted demo and evaluation sessions.
+
+---
+
+## Concurrency Protection Flow (`FOR UPDATE` Row Locking)
+
+To satisfy the critical requirement of **preventing two sales reps from double-booking the same unit**, EstateFlow implements an atomic PostgreSQL function (`book_unit_atomic`) utilizing pessimistic row locking.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor RepA as Sales Rep A (Browser)
+    actor RepB as Sales Rep B (Browser)
+    participant PostgREST as Supabase Gateway
+    participant Postgres as PostgreSQL Engine (units table)
+    participant Bookings as PostgreSQL (bookings table)
+
+    Note over RepA,RepB: Both reps attempt to book Unit A-201 simultaneously
+    RepA->>PostgREST: book_unit_atomic(unit: A-201, lead: Lead 1)
+    RepB->>PostgREST: book_unit_atomic(unit: A-201, lead: Lead 2)
+
+    PostgREST->>Postgres: BEGIN TRANSACTION (Rep A)
+    PostgREST->>Postgres: BEGIN TRANSACTION (Rep B)
+
+    Note over Postgres: Rep A acquires lock first
+    Postgres->>Postgres: SELECT * FROM units WHERE id = 'A-201' FOR UPDATE;
+    Note over Postgres: Rep B's transaction WAITS for lock release
+
+    Postgres->>Postgres: Verify status == 'Available' (PASS)
+    Postgres->>Postgres: UPDATE units SET status = 'Booked'
+    Postgres->>Bookings: INSERT INTO bookings (Confirmed)
+    Postgres->>Postgres: UPDATE leads SET stage = 'Booked'
+    Postgres->>PostgREST: COMMIT TRANSACTION (Rep A)
+    PostgREST-->>RepA: 200 OK: Booking Confirmed!
+
+    Note over Postgres: Lock released. Rep B's transaction evaluates
+    Postgres->>Postgres: Status is now 'Booked' (FAIL)
+    Postgres->>PostgREST: ROLLBACK with Exception 'UNIT_ALREADY_BOOKED'
+    PostgREST-->>RepB: 400 Bad Request: Concurrency Conflict Alert
+    Note over RepB: UI displays warning & refreshes available inventory
+```
+
+---
+
+## 7-Stage Lead Pipeline Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> New: Lead Ingestion (Website, Walk-in, Referral)
+    New --> Contacted: Sales rep outreach phone/email
+    Contacted --> Site_Visit: Scheduled physical property tour
+    Site_Visit --> Interested: Buyer confirms floorplan preference
+    Interested --> Negotiation: Terms, discounts & pricing review
+    Negotiation --> Booked: Advance deposit paid via Atomic Booking
+    Negotiation --> Lost: Buyer opts out or budget mismatch
+    Contacted --> Lost: Inactive or unresponsive
+    Booked --> [*]: Agreement finalized & unit locked
+    Lost --> [*]: Archived in pipeline
+```
 
 ---
 
 ## 5 Important Architectural & Engineering Decisions
 
 ### 1. Atomic Concurrency Control with PostgreSQL Row-Level Locking (`FOR UPDATE`)
-* **The Problem:** In high-velocity sales environments, two representatives can attempt to book the identical property unit simultaneously (e.g., during a launch event or after a weekend site visit). Relying solely on client-side state checks creates race conditions leading to illegal double-bookings.
-* **Our Solution:** We implemented an atomic PostgreSQL Stored Procedure (`book_property_unit`) in `supabase/migrations/001_initial_schema.sql` that executes:
-  ```sql
-  SELECT status INTO v_unit_status FROM public.units WHERE id = p_unit_id FOR UPDATE;
-  ```
-  This immediately acquires a pessimistic row-level lock on the target unit. If another transaction reads the unit, it waits or is cleanly rejected if the status has transitioned from `Available`. In addition, a database-level partial unique index (`CREATE UNIQUE INDEX idx_unique_confirmed_unit_booking ON bookings (unit_id) WHERE status = 'Confirmed'`) acts as an unbreakable safety net.
-* **Interactive Proof:** The application includes a built-in **"Simulate Concurrency Collision"** button that executes two simultaneous requests for the same unit in parallel, demonstrating that one succeeds while the second is safely blocked.
+* **The Problem:** In fast-moving real estate sales environments, multiple agents can attempt to book the identical apartment simultaneously during high-demand project launches. Client-side checks alone result in double-booking race conditions.
+* **Our Solution:** We implemented an atomic stored procedure (`book_unit_atomic`) in `supabase/migrations/001_initial_schema.sql` executing `SELECT ... FOR UPDATE`. This guarantees ACID transactional isolation. In addition, a PostgreSQL partial unique index (`CREATE UNIQUE INDEX idx_unique_confirmed_unit_booking ON bookings (unit_id) WHERE status = 'Confirmed'`) serves as an engine-level safeguard.
+* **Interactive Proof:** The application includes a built-in **"Simulate Concurrency Collision"** modal that fires parallel requests for the same unit, visibly proving that one succeeds while the second is safely rejected.
 
 ### 2. Dual-View Lead Pipeline (Kanban Board + Filterable Table)
-* **The Decision:** Rather than restricting sales reps to either a simple table or a rigid board, EstateFlow provides a real-time toggle between an interactive **7-Stage Kanban Funnel** (`New` → `Contacted` → `Site Visit` → `Interested` → `Negotiation` → `Booked` → `Lost`) and an operational **Tabular View**.
-* **Why:** Sales managers need tabular views for bulk sorting by budget, marketing source, and rep assignment; field sales reps need visual Kanban boards for rapid drag/click stage advancement during phone conversations.
+* **The Decision:** Built a real-time toggle between an interactive **7-Stage Kanban Funnel** and an operational **Tabular View**.
+* **Why:** Field sales reps need drag-and-drop Kanban columns for quick status advancement during phone calls, while sales managers need tabular views for bulk filtering by budget, sales agent, and acquisition source.
 
 ### 3. Database-Enforced Role-Based Access Control (Supabase RLS)
-* **The Decision:** Security is enforced directly at the database engine level via PostgreSQL Row Level Security (RLS) policies rather than solely in Next.js middleware or UI conditionals.
-* **Why:** In real estate organizations, individual sales reps should only edit notes and advance deals for leads assigned to them, while Sales Directors/Admins have unrestricted global visibility. Even if an API route is queried directly, Postgres RLS blocks unauthorized alterations.
+* **The Decision:** Implemented PostgreSQL Row Level Security (RLS) policies directly on database tables rather than relying solely on client-side conditionals.
+* **Why:** In real estate teams, sales reps should only manage their assigned accounts, while Admins require organizational visibility. Database-level RLS prevents unauthorized data access even if API endpoints are accessed directly.
 
 ### 4. Hierarchical Property Inventory Model (`Projects` → `Buildings` → `Units`)
-* **The Decision:** We structured real estate inventory into a 3-tier normalized relational model:
-  - `projects`: Master developments (e.g., *The Grand Horizon*)
-  - `buildings`: Individual towers or phases (e.g., *Tower A - Azure*, *Coral Tower*)
-  - `units`: Specific sellable units with bedroom types (`1BHK`, `2BHK`, `3BHK`, `Penthouse`, `Villa`), floor number, area in sqft, and real-time availability.
-* **Why:** Real estate developments rarely consist of isolated units; inventory matrices are organized by tower and floor plan. This structure enables floor-by-floor matrix navigation and price tiering.
+* **The Decision:** Organized property inventory into a 3-tier normalized relational schema:
+  - `projects`: Master developments (*The Grand Horizon*)
+  - `buildings`: Towers/phases (*Tower A - Azure*)
+  - `units`: Specific sellable units with bedroom configurations (`1BHK`, `2BHK`, `3BHK`, `Penthouse`, `Villa`), floor number, area in sqft, price, and real-time status.
+* **Why:** Mirroring physical developments enables realistic floor-by-floor matrix navigation, building-level filtering, and accurate token calculations.
 
 ### 5. Automated Lead Audit Trail & Integrated Follow-Up Scheduling
-* **The Decision:** Any critical action—such as completing a booking, changing a deal stage, or recording client feedback—is automatically logged into `lead_notes` with a timestamp, author ID, and scheduled follow-up alert.
-* **Why:** Real estate sales cycles often span several weeks or months. By displaying upcoming follow-up dates on the Executive Dashboard, sales reps avoid missing prospective buyers.
+* **The Decision:** Every milestone (deal stage changes, notes, bookings) automatically generates an audit record in `lead_notes` with author attribution and optional follow-up alerts.
+* **Why:** Real estate buying cycles span weeks to months. Linking follow-up reminders directly to the Executive Dashboard ensures prospects are never dropped by sales reps.
 
 ---
 
-## Database Schema & Architecture
+## Database Entity-Relationship Diagram (ERD)
 
 ```mermaid
 erDiagram
@@ -66,15 +204,30 @@ erDiagram
         string email
         numeric budget_min
         numeric budget_max
-        string stage
+        string stage "New | Contacted | Site Visit | Interested | Negotiation | Booked | Lost"
         uuid assigned_to FK
+    }
+
+    PROJECTS {
+        uuid id PK
+        string name
+        string location
+        string city
+        string status "Planning | Under Construction | Ready to Move | Sold Out"
+    }
+
+    BUILDINGS {
+        uuid id PK
+        uuid project_id FK
+        string name
+        int total_floors
     }
 
     UNITS {
         uuid id PK
         uuid building_id FK
         string unit_number
-        string type
+        string type "1BHK | 2BHK | 3BHK | 4BHK | Penthouse | Villa"
         int floor
         numeric area_sqft
         numeric price
@@ -86,42 +239,44 @@ erDiagram
         uuid lead_id FK
         uuid unit_id FK "UNIQUE where Confirmed"
         numeric booking_amount
-        string status
+        string status "Confirmed | Cancelled"
+        string notes
     }
 ```
 
 ---
 
-## Getting Started & Local Setup
+## Local Setup & Installation
 
-### 1. Prerequisites
-- **Node.js**: v18+ (tested on v24)
+### Prerequisites
+- **Node.js**: v18+ (tested on v20 and v24)
 - **npm**: v9+
 
-### 2. Installation
+### 1. Clone & Install Dependencies
 ```bash
-# Clone repository
-git clone <your-repo-url>
-cd realstate-crm
-
-# Install dependencies
+git clone https://github.com/Arumuga-Raja-p/real_estate_crm.git
+cd real_estate_crm
 npm install
 ```
 
-### 3. Configure Supabase (Optional for Live DB)
-1. Create a project at [supabase.com](https://supabase.com).
-2. Open your Supabase project's **SQL Editor** and execute:
-   - `supabase/migrations/001_initial_schema.sql` (Creates tables, triggers, stored procedures & RLS policies)
-   - `supabase/seed.sql` (Populates sample projects, towers, units, and leads)
-3. Copy your project credentials into `.env.local`:
-   ```bash
-   cp .env.example .env.local
-   ```
-   Add your `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+### 2. Configure Environment Variables
+Create a `.env.local` file in the root directory:
+```bash
+cp .env.example .env.local
+```
+Configure your Supabase credentials:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://zpkzxrqesavzvnevbyas.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_kr9FOJ9ErLY7dl1DZtj7PA_xsLaDbJS
+```
 
-> **Note on Zero-Config Demo Mode:** If Supabase keys are not set, EstateFlow automatically runs on a built-in reactive local store seeded with realistic data and local concurrency checks. You can test all features right out of the box!
+### 3. Database Migration (Supabase SQL Editor)
+Run the SQL scripts in order:
+1. `supabase/migrations/001_initial_schema.sql` (Tables, RLS, `book_unit_atomic` RPC)
+2. `supabase/migrations/002_allow_anon_access.sql` (Public RLS access for client apps)
+3. `supabase/seed.sql` (Realistic sample projects, towers, units, and leads)
 
-### 4. Run Locally
+### 4. Run Development Server
 ```bash
 npm run dev
 ```
@@ -129,20 +284,39 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
+## Netlify Deployment Guide
+
+This repository includes a [`netlify.toml`](file:///d:/Realstate%20CRM/netlify.toml) pre-configured for the Next.js runtime.
+
+1. Push your code to GitHub:
+   ```bash
+   git add .
+   git commit -m "feat: complete Real Estate CRM"
+   git push origin main
+   ```
+2. In [Netlify](https://app.netlify.com), select **"Add new site"** → **"Import an existing project"** → **GitHub**.
+3. Choose your repository.
+4. Under **Environment variables**, add:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+5. Click **"Deploy Site"**.
+
+---
+
 ## Testing Scenarios
 
 1. **Lead Management & Notes**:
-   - Go to `/leads` → Click **"Add Lead"** → Fill out contact info and budget.
-   - Click on the lead → View details → Add a note with a follow-up date for tomorrow.
-   - Go to `/` (Dashboard) → Verify the follow-up reminder appears in the **Scheduled Follow-ups** widget.
+   - Go to `/leads` → Click **"Add Lead"** → Enter details.
+   - Click on the lead → View details → Add a note with tomorrow's follow-up date.
+   - Return to `/` (Dashboard) → Verify the reminder appears under **Scheduled Follow-Ups**.
 2. **Property Exploration & Booking**:
    - Go to `/properties` → Filter by Project (*The Grand Horizon*) or Unit Type (*3BHK*).
-   - Click **"Book Unit"** on unit `A-401` → Select a lead → Enter deposit amount → Confirm.
-   - Notice the unit badge instantly switches to **"Booked"** and the lead transitions to **"Booked"** stage.
-   - Go to `/bookings` → Confirm the transaction audit record is registered.
+   - Click **"Book Unit"** → Select a customer → Enter token amount → Confirm.
+   - Verify the unit switches to **"Booked"** and the lead transitions to **"Booked"** stage.
+   - Check `/bookings` for the recorded transaction audit trail.
 3. **Double-Booking Concurrency Test**:
-   - Click the **"Concurrency Test"** button in the header or on `/properties`.
-   - Click **"Simulate Concurrent Collision"** to watch two agents submit booking requests simultaneously for the same unit.
-   - Verify that one transaction is secured while the second is safely blocked.
+   - Click **"Simulate Concurrency Collision"** in the top navbar.
+   - Run the simulation to observe two concurrent booking attempts.
+   - Confirm that one succeeds while the second is blocked with an atomic concurrency error.
 4. **Role Switching (RBAC)**:
-   - Use the top-right avatar menu to switch between **Admin** (`Sarah Connor`) and **Sales Rep** (`John Doe`).
+   - Use the profile menu to switch between **Admin** (`Sarah Connor`) and **Sales Rep** (`John Doe`).

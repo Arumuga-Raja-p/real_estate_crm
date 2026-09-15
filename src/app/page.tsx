@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { DashboardMetrics, LEAD_STAGES } from '@/lib/types/crm';
+import { DashboardMetrics, LEAD_STAGES, LeadStage } from '@/lib/types/crm';
 import { crmService } from '@/lib/crm-service';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { BookingModal } from '@/components/bookings/BookingModal';
@@ -27,11 +27,25 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
+const STAGE_CONFIG: Record<
+  LeadStage,
+  { stroke: string; bg: string; text: string; label: string }
+> = {
+  New: { stroke: '#3b82f6', bg: 'bg-blue-500', text: 'text-blue-500', label: 'New' },
+  Contacted: { stroke: '#6366f1', bg: 'bg-indigo-500', text: 'text-indigo-500', label: 'Contacted' },
+  'Site Visit': { stroke: '#8b5cf6', bg: 'bg-purple-500', text: 'text-purple-500', label: 'Site Visit' },
+  Interested: { stroke: '#f59e0b', bg: 'bg-amber-500', text: 'text-amber-500', label: 'Interested' },
+  Negotiation: { stroke: '#f97316', bg: 'bg-orange-500', text: 'text-orange-500', label: 'Negotiation' },
+  Booked: { stroke: '#10b981', bg: 'bg-emerald-500', text: 'text-emerald-500', label: 'Booked' },
+  Lost: { stroke: '#94a3b8', bg: 'bg-slate-400', text: 'text-slate-400', label: 'Lost' },
+};
+
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [isConcurrencyModalOpen, setIsConcurrencyModalOpen] = useState(false);
+  const [selectedPipelineStage, setSelectedPipelineStage] = useState<LeadStage>('New');
 
   const loadDashboard = useCallback(async () => {
     const data = await crmService.getDashboardMetrics();
@@ -65,6 +79,27 @@ export default function DashboardPage() {
     metrics.totalLeads > 0
       ? ((metrics.bookedLeads / metrics.totalLeads) * 100).toFixed(1)
       : '0';
+  const selectedStageCount = metrics.leadsByStage[selectedPipelineStage] || 0;
+  const selectedStagePercentage =
+    metrics.totalLeads > 0 ? (selectedStageCount / metrics.totalLeads) * 100 : 0;
+  const peakStageCount = Math.max(...LEAD_STAGES.map((stage) => metrics.leadsByStage[stage] || 0), 1);
+
+  let accumulatedPercentage = 0;
+  const pieSlices = LEAD_STAGES.map((stage) => {
+    const count = metrics.leadsByStage[stage] || 0;
+    const percentage = metrics.totalLeads > 0 ? (count / metrics.totalLeads) * 100 : 0;
+    const strokeDasharray = `${(percentage / 100) * 238.76} 238.76`;
+    const strokeDashoffset = -((accumulatedPercentage / 100) * 238.76);
+    accumulatedPercentage += percentage;
+    return {
+      stage,
+      count,
+      percentage,
+      strokeDasharray,
+      strokeDashoffset,
+      config: STAGE_CONFIG[stage],
+    };
+  }).filter((s) => s.count > 0);
 
   const actionButtons = (
     <Button
@@ -221,104 +256,281 @@ export default function DashboardPage() {
                 Kanban Board <ArrowUpRight className="h-3 w-3" />
               </Link>
             </CardHeader>
-            <CardContent className="space-y-3.5 pt-2">
-              {LEAD_STAGES.map((stage) => {
-                const count = metrics.leadsByStage[stage] || 0;
-                const percentage =
-                  metrics.totalLeads > 0 ? (count / metrics.totalLeads) * 100 : 0;
+            <CardContent className="pt-2">
+              <div className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
+                <div className="space-y-2.5">
+                  {LEAD_STAGES.map((stage, index) => {
+                    const count = metrics.leadsByStage[stage] || 0;
+                    const totalPercentage =
+                      metrics.totalLeads > 0 ? (count / metrics.totalLeads) * 100 : 0;
+                    const relativeWidth = Math.max((count / peakStageCount) * 100, count > 0 ? 12 : 4);
+                    const isSelected = selectedPipelineStage === stage;
 
-                return (
-                  <div key={stage} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <StageBadge stage={stage} />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-foreground">{count}</span>
-                        <span className="text-muted-foreground text-[11px]">
-                          ({percentage.toFixed(0)}%)
-                        </span>
-                      </div>
-                    </div>
-                    {/* Progress Bar */}
-                    <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-300 ${
-                          stage === 'Booked'
-                            ? 'bg-emerald-500'
-                            : stage === 'Lost'
-                            ? 'bg-neutral-300'
-                            : stage === 'Interested' || stage === 'Negotiation'
-                            ? 'bg-amber-500'
-                            : 'bg-primary'
+                    return (
+                      <button
+                        key={stage}
+                        type="button"
+                        onClick={() => setSelectedPipelineStage(stage)}
+                        className={`group w-full rounded-2xl border p-3 text-left transition-all ${
+                          isSelected
+                            ? 'border-foreground bg-primary text-primary-foreground shadow-sm'
+                            : 'border-transparent bg-muted/45 hover:border-foreground/15 hover:bg-card'
                         }`}
-                        style={{ width: `${Math.max(percentage, count > 0 ? 6 : 0)}%` }}
-                      />
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span
+                              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+                                isSelected
+                                  ? 'bg-primary-foreground text-primary'
+                                  : 'bg-background text-foreground ring-1 ring-border'
+                              }`}
+                            >
+                              {index + 1}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold">{stage}</p>
+                              <p className={`text-[11px] ${isSelected ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
+                                {totalPercentage.toFixed(0)}% of all leads
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <div className="text-lg font-bold leading-none">{count}</div>
+                            <div className={`text-[10px] ${isSelected ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
+                              Leads
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className={`mt-3 h-2.5 rounded-full overflow-hidden ${isSelected ? 'bg-primary-foreground/15' : 'bg-background'}`}>
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              isSelected ? 'bg-primary-foreground' : 'bg-foreground'
+                            }`}
+                            style={{ width: `${relativeWidth}%` }}
+                          />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="rounded-3xl border border-border/70 bg-muted/35 p-5 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                          Selected Stage
+                        </p>
+                        <h3 className="mt-1 text-xl font-bold text-foreground">
+                          {selectedPipelineStage}
+                        </h3>
+                      </div>
+                      <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+                        {selectedStagePercentage.toFixed(0)}%
+                      </span>
+                    </div>
+
+                    <div className="mt-6">
+                      <div className="text-5xl font-bold tracking-tight text-foreground">
+                        {selectedStageCount}
+                      </div>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        leads currently in this stage
+                      </p>
                     </div>
                   </div>
-                );
-              })}
+
+                  <div className="mt-8 space-y-3">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Total pipeline</span>
+                      <span className="font-semibold text-foreground">{metrics.totalLeads} leads</span>
+                    </div>
+                    <div className="grid grid-cols-7 gap-1.5">
+                      {LEAD_STAGES.map((stage) => {
+                        const count = metrics.leadsByStage[stage] || 0;
+                        const height = Math.max((count / peakStageCount) * 72, count > 0 ? 18 : 8);
+
+                        return (
+                          <button
+                            key={stage}
+                            type="button"
+                            onClick={() => setSelectedPipelineStage(stage)}
+                            title={`${stage}: ${count} leads`}
+                            className="flex h-20 items-end justify-center rounded-xl bg-background px-1 transition hover:bg-card"
+                          >
+                            <span
+                              className={`w-full rounded-t-full transition-all ${
+                                selectedPipelineStage === stage ? 'bg-primary' : 'bg-muted-foreground/35'
+                              }`}
+                              style={{ height }}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          {/* Recent Bookings (3 Cols) - Iconic shadcn "Recent Sales" style */}
-          <Card className="col-span-3 shadow-2xs">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-sm font-semibold text-foreground">
-                  Recent Unit Bookings
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Latest confirmed property agreements.
-                </CardDescription>
-              </div>
-              <Link
-                href="/bookings"
-                className="text-xs font-medium text-primary hover:underline flex items-center gap-1"
-              >
-                View all <ArrowUpRight className="h-3 w-3" />
-              </Link>
-            </CardHeader>
-            <CardContent>
-              {metrics.recentBookings.length === 0 ? (
-                <p className="text-xs text-muted-foreground italic py-6 text-center">
-                  No confirmed bookings yet.
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {metrics.recentBookings.map((b) => (
-                    <div key={b.id} className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <Avatar className="h-9 w-9 border border-border">
-                          <AvatarFallback className="text-xs font-bold bg-muted text-foreground">
-                            {b.lead?.first_name?.[0] || 'U'}
-                            {b.lead?.last_name?.[0] || 'N'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-foreground truncate">
-                            {b.lead?.first_name} {b.lead?.last_name}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground truncate">
-                            Unit {b.unit?.unit_number} ({b.unit?.type})
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="text-right shrink-0">
-                        <div className="text-xs font-bold text-foreground">
-                          +${b.unit?.price.toLocaleString() || '—'}
-                        </div>
-                        <span className="text-[10px] text-emerald-600 font-medium">
-                          Token: ${b.booking_amount.toLocaleString()}
+          {/* Right Column: Circle Chart (Top) & Recent Bookings (Bottom) */}
+          <div className="col-span-3 flex flex-col gap-4">
+            {/* Sales Pipeline Circle / Donut Chart */}
+            <Card className="shadow-2xs">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <div>
+                  <CardTitle className="text-sm font-semibold text-foreground">
+                    Pipeline Distribution
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Lead share across active stages.
+                  </CardDescription>
+                </div>
+                <Badge variant="outline" className="text-[10px] font-semibold">
+                  {metrics.totalLeads} Total
+                </Badge>
+              </CardHeader>
+              <CardContent className="pt-1">
+                {metrics.totalLeads === 0 ? (
+                  <p className="text-xs text-muted-foreground italic py-4 text-center">
+                    No leads in pipeline yet.
+                  </p>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    {/* Donut Chart */}
+                    <div className="relative h-28 w-28 shrink-0 flex items-center justify-center">
+                      <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r={38}
+                          fill="transparent"
+                          stroke="currentColor"
+                          strokeWidth="10"
+                          className="text-muted/30"
+                        />
+                        {pieSlices.map((s) => (
+                          <circle
+                            key={s.stage}
+                            cx="50"
+                            cy="50"
+                            r={38}
+                            fill="transparent"
+                            stroke={s.config.stroke}
+                            strokeWidth={selectedPipelineStage === s.stage ? 13 : 10}
+                            strokeDasharray={s.strokeDasharray}
+                            strokeDashoffset={s.strokeDashoffset}
+                            className="transition-all duration-300 cursor-pointer"
+                            onClick={() => setSelectedPipelineStage(s.stage)}
+                          />
+                        ))}
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span className="text-xl font-bold tracking-tight text-foreground leading-none">
+                          {metrics.totalLeads}
+                        </span>
+                        <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider mt-0.5">
+                          Leads
                         </span>
                       </div>
                     </div>
-                  ))}
+
+                    {/* Compact Stage Legend */}
+                    <div className="flex-1 min-w-0 grid grid-cols-2 gap-x-2 gap-y-1.5">
+                      {pieSlices.map((s) => {
+                        const isSelected = selectedPipelineStage === s.stage;
+                        return (
+                          <button
+                            key={s.stage}
+                            type="button"
+                            onClick={() => setSelectedPipelineStage(s.stage)}
+                            className={`flex items-center justify-between p-1.5 rounded-lg text-left transition cursor-pointer ${
+                              isSelected
+                                ? 'bg-muted font-semibold ring-1 ring-border'
+                                : 'hover:bg-muted/50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span
+                                className="h-2 w-2 rounded-full shrink-0"
+                                style={{ backgroundColor: s.config.stroke }}
+                              />
+                              <span className="text-[11px] text-foreground truncate">{s.stage}</span>
+                            </div>
+                            <span className="text-[10px] text-muted-foreground ml-1 shrink-0 font-medium">
+                              {s.count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Recent Unit Bookings */}
+            <Card className="shadow-2xs flex-1 flex flex-col">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <div>
+                  <CardTitle className="text-sm font-semibold text-foreground">
+                    Recent Unit Bookings
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Latest confirmed property agreements.
+                  </CardDescription>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <Link
+                  href="/bookings"
+                  className="text-xs font-medium text-primary hover:underline flex items-center gap-1"
+                >
+                  View all <ArrowUpRight className="h-3 w-3" />
+                </Link>
+              </CardHeader>
+              <CardContent className="flex-1 pt-1">
+                {metrics.recentBookings.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic py-6 text-center">
+                    No confirmed bookings yet.
+                  </p>
+                ) : (
+                  <div className="space-y-3.5">
+                    {metrics.recentBookings.slice(0, 3).map((b) => (
+                      <div key={b.id} className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Avatar className="h-9 w-9 border border-border">
+                            <AvatarFallback className="text-xs font-bold bg-muted text-foreground">
+                              {b.lead?.first_name?.[0] || 'U'}
+                              {b.lead?.last_name?.[0] || 'N'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-foreground truncate">
+                              {b.lead?.first_name} {b.lead?.last_name}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              Unit {b.unit?.unit_number} ({b.unit?.type})
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <div className="text-xs font-bold text-foreground">
+                            +${b.unit?.price.toLocaleString() || '—'}
+                          </div>
+                          <span className="text-[10px] text-emerald-600 font-medium">
+                            Token: ${b.booking_amount.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Scheduled Follow-ups Table / Action Center */}
