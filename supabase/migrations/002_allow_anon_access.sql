@@ -1,3 +1,4 @@
+
 -- ==============================================================================
 -- 002_allow_anon_access.sql
 -- Enable public / anon access for client demonstration and evaluation

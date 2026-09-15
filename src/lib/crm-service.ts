@@ -62,6 +62,20 @@ class CRMStore {
 
   init() {
     if (!isBrowser()) return;
+    if (createClient()) {
+      // Live Supabase database mode: wipe local mock storage so only live DB is used
+      const keys = ['projects', 'buildings', 'units', 'leads', 'notes', 'bookings'];
+      keys.forEach((k) => localStorage.removeItem(STORAGE_KEY_PREFIX + k));
+      this.projects = [];
+      this.buildings = [];
+      this.units = [];
+      this.leads = [];
+      this.notes = [];
+      this.bookings = [];
+      this.profiles = INITIAL_PROFILES;
+      this.currentUserId = INITIAL_PROFILES[0].id;
+      return;
+    }
     this.profiles = loadState('profiles', INITIAL_PROFILES);
     this.projects = loadState('projects', INITIAL_PROJECTS);
     this.buildings = loadState('buildings', INITIAL_BUILDINGS);
@@ -268,17 +282,33 @@ export const crmService = {
     const supabase = createClient();
     if (supabase) {
       try {
+        const isValidUuid = (val?: string | null) =>
+          Boolean(val && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val));
+
+        const insertPayload: Record<string, string | number | null> = {
+          first_name: input.first_name,
+          last_name: input.last_name,
+          email: input.email || null,
+          phone: input.phone,
+          budget_min: input.budget_min || 0,
+          budget_max: input.budget_max || 0,
+          preferred_type: input.preferred_type || null,
+          source: input.source || 'Website',
+          stage: input.stage || 'New',
+          assigned_to: input.assigned_to && isValidUuid(input.assigned_to) ? input.assigned_to : null,
+          created_by: isValidUuid(crmStore.currentUserId) ? crmStore.currentUserId : null,
+        };
+
         const { data, error } = await supabase
           .from('leads')
-          .insert({
-            ...input,
-            created_by: crmStore.currentUserId,
-          })
-          .select()
+          .insert(insertPayload)
+          .select(`*, assigned_profile:profiles!assigned_to(*)`)
           .single();
+
         if (!error && data) return data as Lead;
-      } catch {
-        // Fallback
+        if (error) console.error('Supabase createLead error:', error);
+      } catch (err) {
+        console.error('Failed to create lead in Supabase:', err);
       }
     }
 
@@ -320,7 +350,10 @@ export const crmService = {
     const supabase = createClient();
     if (supabase) {
       try {
-        await supabase.from('leads').update({ assigned_to: assignedTo, updated_at: new Date().toISOString() }).eq('id', id);
+        const isValidUuid = (val?: string | null) =>
+          Boolean(val && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val));
+        const assignedUuid = isValidUuid(assignedTo) ? assignedTo : null;
+        await supabase.from('leads').update({ assigned_to: assignedUuid, updated_at: new Date().toISOString() }).eq('id', id);
         return;
       } catch {
         // Fallback
@@ -341,11 +374,15 @@ export const crmService = {
     const supabase = createClient();
     if (supabase) {
       try {
+        const isValidUuid = (val?: string | null) =>
+          Boolean(val && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val));
+        const authorUuid = isValidUuid(currentUser.id) ? currentUser.id : null;
+
         const { data, error } = await supabase
           .from('lead_notes')
           .insert({
             lead_id: leadId,
-            author_id: currentUser.id,
+            author_id: authorUuid,
             note,
             follow_up_date: followUpDate || null,
           })
@@ -377,6 +414,48 @@ export const crmService = {
   // INVENTORY & PROPERTIES
   // --------------------------------------------------------------------------
   async getProjects(): Promise<(Project & { building_count: number; unit_count: number })[]> {
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        const { data: projects, error } = await supabase
+          .from('projects')
+          .select(`
+            *,
+            buildings (
+              id,
+              units (id)
+            )
+          `)
+          .order('created_at', { ascending: true });
+
+        if (!error && projects) {
+          type ProjectWithBuildings = Project & { buildings?: { id: string; units?: { id: string }[] }[] };
+
+          return (projects as ProjectWithBuildings[]).map((p) => {
+            const buildings = p.buildings || [];
+            const totalUnits = buildings.reduce((acc, b) => acc + (b.units?.length || 0), 0);
+            return {
+              id: p.id,
+              name: p.name,
+              location: p.location,
+              city: p.city,
+              description: p.description,
+              status: p.status,
+              featured_image: p.featured_image || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80',
+              created_at: p.created_at,
+              updated_at: p.updated_at,
+              building_count: buildings.length,
+              unit_count: totalUnits,
+            };
+          });
+        }
+        return [];
+      } catch (err) {
+        console.error('Failed to load projects from Supabase:', err);
+        return [];
+      }
+    }
+
     crmStore.init();
     return crmStore.projects.map((proj) => {
       const buildings = crmStore.buildings.filter((b) => b.project_id === proj.id);
@@ -390,12 +469,154 @@ export const crmService = {
     });
   },
 
+  async createProject(input: {
+    name: string;
+    location: string;
+    city: string;
+    status: Project['status'];
+    buildingName: string;
+    totalFloors: number;
+  }): Promise<Project> {
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        const { data: projectData, error: projectError } = await supabase
+          .from('projects')
+          .insert({
+            name: input.name,
+            location: input.location,
+            city: input.city,
+            status: input.status,
+          })
+          .select()
+          .single();
+
+        if (projectError) throw new Error(projectError.message);
+        if (!projectData) throw new Error('Project was not created.');
+
+        const { error: buildingError } = await supabase
+          .from('buildings')
+          .insert({
+            project_id: projectData.id,
+            name: input.buildingName,
+            total_floors: input.totalFloors,
+          });
+
+        if (buildingError) throw new Error(buildingError.message);
+        return projectData as Project;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to create property in Supabase.';
+        throw new Error(message);
+      }
+    }
+
+    crmStore.init();
+    const now = new Date().toISOString();
+    const project: Project = {
+      id: `proj-${Date.now()}`,
+      name: input.name,
+      location: input.location,
+      city: input.city,
+      description: null,
+      status: input.status,
+      created_at: now,
+      updated_at: now,
+    };
+    const building: Building = {
+      id: `bldg-${Date.now()}`,
+      project_id: project.id,
+      name: input.buildingName,
+      total_floors: input.totalFloors,
+      created_at: now,
+      project,
+    };
+
+    crmStore.projects.unshift(project);
+    crmStore.buildings.unshift(building);
+    crmStore.persist();
+    return project;
+  },
+
+  async getBuildings(projectId?: string): Promise<Building[]> {
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        let query = supabase
+          .from('buildings')
+          .select('*, project:projects(*)')
+          .order('name', { ascending: true });
+
+        if (projectId && projectId !== 'All') {
+          query = query.eq('project_id', projectId);
+        }
+
+        const { data, error } = await query;
+        if (!error && data) return data as Building[];
+        return [];
+      } catch (err) {
+        console.error('Failed to load buildings from Supabase:', err);
+        return [];
+      }
+    }
+
+    crmStore.init();
+    return crmStore.buildings
+      .filter((building) => !projectId || projectId === 'All' || building.project_id === projectId)
+      .map((building) => ({
+        ...building,
+        project: crmStore.projects.find((project) => project.id === building.project_id),
+      }));
+  },
+
   async getUnits(filters?: {
     projectId?: string;
     buildingId?: string;
     status?: 'Available' | 'Booked' | 'All';
     type?: string;
   }): Promise<PropertyUnit[]> {
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        let query = supabase
+          .from('units')
+          .select(`
+            *,
+            building:buildings (
+              *,
+              project:projects (*)
+            )
+          `)
+          .order('unit_number', { ascending: true });
+
+        if (filters?.buildingId && filters.buildingId !== 'All') {
+          query = query.eq('building_id', filters.buildingId);
+        }
+        if (filters?.status && filters.status !== 'All') {
+          query = query.eq('status', filters.status);
+        }
+        if (filters?.type && filters.type !== 'All') {
+          query = query.eq('type', filters.type);
+        }
+
+        const { data, error } = await query;
+        if (!error && data) {
+          let units = data as PropertyUnit[];
+          if (filters?.projectId && filters.projectId !== 'All') {
+            units = units.filter(
+              (u) =>
+                u.building?.project?.id === filters.projectId ||
+                u.building?.project_id === filters.projectId
+            );
+          }
+          return units;
+        }
+        return [];
+      } catch (err) {
+        console.error('Failed to load units from Supabase:', err);
+        return [];
+      }
+    }
+
     crmStore.init();
     let units = [...crmStore.units];
 
@@ -425,6 +646,56 @@ export const crmService = {
     });
   },
 
+  async createUnit(input: Pick<PropertyUnit, 'building_id' | 'unit_number' | 'type' | 'floor' | 'area_sqft' | 'price'>): Promise<PropertyUnit> {
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('units')
+          .insert({
+            building_id: input.building_id,
+            unit_number: input.unit_number,
+            type: input.type,
+            floor: input.floor,
+            area_sqft: input.area_sqft,
+            price: input.price,
+            status: 'Available',
+          })
+          .select(`
+            *,
+            building:buildings (
+              *,
+              project:projects (*)
+            )
+          `)
+          .single();
+
+        if (!error && data) return data as PropertyUnit;
+        if (error) throw new Error(error.message);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to create unit in Supabase.';
+        throw new Error(message);
+      }
+    }
+
+    crmStore.init();
+    const building = crmStore.buildings.find((item) => item.id === input.building_id);
+    const project = building ? crmStore.projects.find((item) => item.id === building.project_id) : undefined;
+    const now = new Date().toISOString();
+    const unit: PropertyUnit = {
+      ...input,
+      id: `unit-${Date.now()}`,
+      status: 'Available',
+      created_at: now,
+      updated_at: now,
+      building: building ? { ...building, project } : undefined,
+    };
+
+    crmStore.units.unshift(unit);
+    crmStore.persist();
+    return unit;
+  },
+
   // --------------------------------------------------------------------------
   // ATOMIC CONCURRENCY BOOKING FLOW
   // --------------------------------------------------------------------------
@@ -440,10 +711,13 @@ export const crmService = {
     // 1. Try real Supabase Stored Procedure (RPC) with Pessimistic 'FOR UPDATE' row lock
     if (supabase) {
       try {
+        const isValidUuid = (val: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+        const bookedByUuid = isValidUuid(currentUser.id) ? currentUser.id : null;
+
         const { data, error } = await supabase.rpc('book_property_unit', {
           p_lead_id: params.leadId,
           p_unit_id: params.unitId,
-          p_booked_by: currentUser.id,
+          p_booked_by: bookedByUuid,
           p_amount: params.bookingAmount,
           p_notes: params.notes || null,
         });
@@ -542,6 +816,34 @@ export const crmService = {
   // BOOKINGS
   // --------------------------------------------------------------------------
   async getBookings(): Promise<Booking[]> {
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('bookings')
+          .select(`
+            *,
+            lead:leads(*),
+            unit:units(
+              *,
+              building:buildings(
+                *,
+                project:projects(*)
+              )
+            )
+          `)
+          .order('created_at', { ascending: false });
+
+        if (!error && data) {
+          return data as Booking[];
+        }
+        return [];
+      } catch (err) {
+        console.error('Failed to load bookings from Supabase:', err);
+        return [];
+      }
+    }
+
     crmStore.init();
     return crmStore.bookings.map((b) => {
       const lead = crmStore.leads.find((l) => l.id === b.lead_id);
@@ -563,6 +865,73 @@ export const crmService = {
   // DASHBOARD METRICS
   // --------------------------------------------------------------------------
   async getDashboardMetrics(): Promise<DashboardMetrics> {
+    const supabase = createClient();
+    if (supabase) {
+      try {
+        const [leadsRes, unitsRes, bookingsRes, notesRes] = await Promise.all([
+          supabase.from('leads').select('*'),
+          supabase.from('units').select('id, price, status'),
+          supabase.from('bookings').select('*, lead:leads(*), unit:units(*, building:buildings(*, project:projects(*)))').order('created_at', { ascending: false }),
+          supabase.from('lead_notes').select('*, lead:leads(*)').order('created_at', { ascending: false }),
+        ]);
+
+        if (!leadsRes.error && !unitsRes.error && leadsRes.data && unitsRes.data) {
+          const leads = (leadsRes.data || []) as Lead[];
+          const units = (unitsRes.data || []) as PropertyUnit[];
+          const bookings = (bookingsRes.data || []) as Booking[];
+          const notes = (notesRes.data || []) as (LeadNote & { lead?: Lead })[];
+
+          const stageCounts: Record<LeadStage, number> = {
+            New: 0,
+            Contacted: 0,
+            'Site Visit': 0,
+            Interested: 0,
+            Negotiation: 0,
+            Booked: 0,
+            Lost: 0,
+          };
+
+          leads.forEach((l) => {
+            if (stageCounts[l.stage] !== undefined) {
+              stageCounts[l.stage]++;
+            }
+          });
+
+          const totalRevenue = bookings.reduce((sum, b) => sum + (Number(b.unit?.price) || Number(b.booking_amount) || 0), 0);
+          const availableUnits = units.filter((u) => u.status === 'Available').length;
+          const bookedUnits = units.filter((u) => u.status === 'Booked').length;
+
+          const now = new Date();
+          const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+          const endOfToday = startOfToday + 24 * 3600 * 1000;
+
+          const upcomingFollowUps = notes
+            .filter((n) => n.follow_up_date && !n.is_completed)
+            .sort((a, b) => new Date(a.follow_up_date!).getTime() - new Date(b.follow_up_date!).getTime());
+
+          const followUpsToday = upcomingFollowUps.filter((n) => {
+            const t = new Date(n.follow_up_date!).getTime();
+            return t >= startOfToday && t <= endOfToday;
+          }).length;
+
+          return {
+            totalLeads: leads.length,
+            activeLeads: leads.filter((l) => l.stage !== 'Booked' && l.stage !== 'Lost').length,
+            bookedLeads: stageCounts['Booked'] || 0,
+            totalRevenue,
+            availableUnits,
+            bookedUnits,
+            followUpsToday,
+            leadsByStage: stageCounts,
+            recentBookings: bookings.slice(0, 5),
+            upcomingFollowUps: upcomingFollowUps.slice(0, 6),
+          };
+        }
+      } catch (err) {
+        console.error('Failed to load dashboard metrics from Supabase:', err);
+      }
+    }
+
     crmStore.init();
     const leads = crmStore.leads;
     const units = crmStore.units;

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { PropertyUnit, Lead } from '@/lib/types/crm';
 import { crmService } from '@/lib/crm-service';
 import {
@@ -19,7 +19,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { AlertCircle, CheckCircle, ShieldAlert, Sparkles, Building2, User } from 'lucide-react';
@@ -48,19 +47,13 @@ export function BookingModal({
   const [loading, setLoading] = useState(false);
   const [conflictError, setConflictError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isOpen) {
-      setConflictError(null);
-      loadData();
-    }
-  }, [isOpen, defaultLeadId, defaultUnitId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     const allLeads = await crmService.getLeads();
     // Exclude leads that are already booked or lost, unless it is defaultLeadId
     const eligibleLeads = allLeads.filter(
       (l) => l.stage !== 'Booked' && l.stage !== 'Lost' || l.id === defaultLeadId
     );
+    setConflictError(null);
     setLeads(eligibleLeads);
 
     const units = await crmService.getUnits({ status: 'Available' });
@@ -78,7 +71,13 @@ export function BookingModal({
       setSelectedUnitId(units[0].id);
       setBookingAmount(Math.round(units[0].price * 0.05).toString());
     }
-  };
+  }, [defaultLeadId, defaultUnitId, selectedLeadId, selectedUnitId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      void Promise.resolve().then(loadData);
+    }
+  }, [isOpen, loadData]);
 
   const handleUnitChange = (unitId: string) => {
     setSelectedUnitId(unitId);
@@ -137,6 +136,21 @@ export function BookingModal({
 
   const currentUnit = availableUnits.find((u) => u.id === selectedUnitId);
   const currentLead = leads.find((l) => l.id === selectedLeadId);
+  const getLeadLabel = (lead: Lead) =>
+    `${lead.first_name} ${lead.last_name} (${lead.phone}) - ${lead.preferred_type || 'Any Unit'}`;
+  const getUnitLabel = (unit: PropertyUnit) => {
+    const projectName = unit.building?.project?.name;
+    const buildingName = unit.building?.name;
+    const locationLabel = [projectName, buildingName].filter(Boolean).join(' / ');
+
+    return [
+      `${unit.unit_number} (${unit.type})`,
+      locationLabel,
+      `$${unit.price.toLocaleString()}`,
+    ]
+      .filter(Boolean)
+      .join(' - ');
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -179,12 +193,14 @@ export function BookingModal({
             </Label>
             <Select value={selectedLeadId} onValueChange={(val) => val && setSelectedLeadId(val)}>
               <SelectTrigger className="w-full bg-neutral-50/50">
-                <SelectValue placeholder="Choose a lead..." />
+                <span className="truncate text-left">
+                  {currentLead ? getLeadLabel(currentLead) : 'Choose a lead...'}
+                </span>
               </SelectTrigger>
               <SelectContent>
                 {leads.map((l) => (
                   <SelectItem key={l.id} value={l.id}>
-                    {l.first_name} {l.last_name} ({l.phone}) - {l.preferred_type || 'Any Unit'}
+                    {getLeadLabel(l)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -205,12 +221,14 @@ export function BookingModal({
             </Label>
             <Select value={selectedUnitId} onValueChange={(val) => val && handleUnitChange(val)}>
               <SelectTrigger className="w-full bg-neutral-50/50">
-                <SelectValue placeholder="Choose an available unit..." />
+                <span className="truncate text-left">
+                  {currentUnit ? getUnitLabel(currentUnit) : 'Choose an available unit...'}
+                </span>
               </SelectTrigger>
               <SelectContent className="max-h-60">
                 {availableUnits.map((u) => (
                   <SelectItem key={u.id} value={u.id}>
-                    {u.unit_number} ({u.type}) - ${u.price.toLocaleString()} [{u.area_sqft} sqft, Flr {u.floor}]
+                    {getUnitLabel(u)} [{u.area_sqft} sqft, Flr {u.floor}]
                   </SelectItem>
                 ))}
               </SelectContent>

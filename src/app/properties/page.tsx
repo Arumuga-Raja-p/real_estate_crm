@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Project, PropertyUnit } from '@/lib/types/crm';
+import { Building, Project, ProjectStatus, PropertyUnit, UnitType } from '@/lib/types/crm';
 import { crmService } from '@/lib/crm-service';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { BookingModal } from '@/components/bookings/BookingModal';
@@ -10,15 +10,24 @@ import { ConcurrencyTestModal } from '@/components/properties/ConcurrencyTestMod
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '@/components/ui/select';
+import { toast } from 'sonner';
 import {
-  Building2,
   CheckCircle,
   XCircle,
   Zap,
@@ -26,15 +35,34 @@ import {
   Sparkles,
   Layers,
   MapPin,
+  Plus,
 } from 'lucide-react';
 
 function PropertiesContent() {
   const searchParams = useSearchParams();
   const [projects, setProjects] = useState<(Project & { building_count: number; unit_count: number })[]>([]);
+  const [buildings, setBuildings] = useState<Building[]>([]);
   const [units, setUnits] = useState<PropertyUnit[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('All');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Available' | 'Booked'>('All');
   const [typeFilter, setTypeFilter] = useState<string>('All');
+  const [isAddPropertyModalOpen, setIsAddPropertyModalOpen] = useState(false);
+  const [propertyName, setPropertyName] = useState('');
+  const [propertyLocation, setPropertyLocation] = useState('');
+  const [propertyCity, setPropertyCity] = useState('');
+  const [propertyStatus, setPropertyStatus] = useState<ProjectStatus>('Under Construction');
+  const [propertyBuildingName, setPropertyBuildingName] = useState('');
+  const [propertyTotalFloors, setPropertyTotalFloors] = useState('');
+  const [isCreatingProperty, setIsCreatingProperty] = useState(false);
+  const [isAddUnitModalOpen, setIsAddUnitModalOpen] = useState(false);
+  const [addProjectId, setAddProjectId] = useState('');
+  const [addBuildingId, setAddBuildingId] = useState('');
+  const [unitNumber, setUnitNumber] = useState('');
+  const [unitType, setUnitType] = useState<UnitType>('2BHK');
+  const [unitFloor, setUnitFloor] = useState('');
+  const [unitArea, setUnitArea] = useState('');
+  const [unitPrice, setUnitPrice] = useState('');
+  const [isCreatingUnit, setIsCreatingUnit] = useState(false);
 
   // Modals
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -43,33 +71,166 @@ function PropertiesContent() {
 
   useEffect(() => {
     if (searchParams.get('testConcurrency') === 'true') {
-      setIsConcurrencyModalOpen(true);
+      void Promise.resolve().then(() => setIsConcurrencyModalOpen(true));
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    loadProperties();
+  const loadProperties = useCallback(async () => {
+    const [pList, bList, uList] = await Promise.all([
+      crmService.getProjects(),
+      crmService.getBuildings(),
+      crmService.getUnits({
+        projectId: selectedProjectId,
+        status: statusFilter,
+        type: typeFilter,
+      }),
+    ]);
+    setProjects(pList);
+    setBuildings(bList);
+    setUnits(uList);
   }, [selectedProjectId, statusFilter, typeFilter]);
 
-  const loadProperties = async () => {
-    const pList = await crmService.getProjects();
-    setProjects(pList);
-
-    const uList = await crmService.getUnits({
-      projectId: selectedProjectId,
-      status: statusFilter,
-      type: typeFilter,
-    });
-    setUnits(uList);
-  };
+  useEffect(() => {
+    void Promise.resolve().then(loadProperties);
+  }, [loadProperties]);
 
   const handleBookUnit = (unit: PropertyUnit) => {
     setSelectedUnitForBooking(unit);
     setIsBookingModalOpen(true);
   };
 
+  const getProjectName = (projectId: string) =>
+    projectId === 'All' ? 'All Projects' : projects.find((project) => project.id === projectId)?.name || 'All Projects';
+
+  const resetAddUnitForm = () => {
+    setUnitNumber('');
+    setUnitType('2BHK');
+    setUnitFloor('');
+    setUnitArea('');
+    setUnitPrice('');
+  };
+
+  const resetAddPropertyForm = () => {
+    setPropertyName('');
+    setPropertyLocation('');
+    setPropertyCity('');
+    setPropertyStatus('Under Construction');
+    setPropertyBuildingName('');
+    setPropertyTotalFloors('');
+  };
+
+  const handleCreateProperty = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const totalFloors = Number(propertyTotalFloors);
+
+    if (
+      !propertyName.trim() ||
+      !propertyLocation.trim() ||
+      !propertyCity.trim() ||
+      !propertyBuildingName.trim() ||
+      totalFloors <= 0
+    ) {
+      toast.error('Please enter valid property details.');
+      return;
+    }
+
+    setIsCreatingProperty(true);
+    try {
+      await crmService.createProject({
+        name: propertyName.trim(),
+        location: propertyLocation.trim(),
+        city: propertyCity.trim(),
+        status: propertyStatus,
+        buildingName: propertyBuildingName.trim(),
+        totalFloors,
+      });
+      toast.success('Property added successfully.');
+      setIsAddPropertyModalOpen(false);
+      resetAddPropertyForm();
+      await loadProperties();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to add property.';
+      toast.error(message);
+    } finally {
+      setIsCreatingProperty(false);
+    }
+  };
+
+  const openAddUnitModal = () => {
+    const initialProjectId = selectedProjectId !== 'All' ? selectedProjectId : projects[0]?.id || '';
+    const firstBuilding = buildings.find((building) => building.project_id === initialProjectId) || buildings[0];
+    setAddProjectId(initialProjectId || firstBuilding?.project_id || '');
+    setAddBuildingId(firstBuilding?.id || '');
+    resetAddUnitForm();
+    setIsAddUnitModalOpen(true);
+  };
+
+  const handleAddProjectChange = (projectId: string) => {
+    setAddProjectId(projectId);
+    setAddBuildingId(buildings.find((building) => building.project_id === projectId)?.id || '');
+  };
+
+  const handleCreateUnit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const floor = Number(unitFloor);
+    const area = Number(unitArea);
+    const price = Number(unitPrice);
+
+    if (!addBuildingId || !unitNumber.trim() || floor <= 0 || area <= 0 || price <= 0) {
+      toast.error('Please enter valid unit details.');
+      return;
+    }
+
+    setIsCreatingUnit(true);
+    try {
+      await crmService.createUnit({
+        building_id: addBuildingId,
+        unit_number: unitNumber.trim(),
+        type: unitType,
+        floor,
+        area_sqft: area,
+        price,
+      });
+      toast.success('Unit added successfully.');
+      setIsAddUnitModalOpen(false);
+      resetAddUnitForm();
+      await loadProperties();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to add unit.';
+      toast.error(message);
+    } finally {
+      setIsCreatingUnit(false);
+    }
+  };
+
   const availableCount = units.filter((u) => u.status === 'Available').length;
   const bookedCount = units.filter((u) => u.status === 'Booked').length;
+  const addUnitBuildings = buildings.filter((building) => building.project_id === addProjectId);
+
+  const inventoryActions = (
+    <div className="flex items-center gap-2">
+      <Button
+        onClick={() => {
+          resetAddPropertyForm();
+          setIsAddPropertyModalOpen(true);
+        }}
+        variant="outline"
+        size="sm"
+        className="h-8 font-semibold text-xs flex items-center gap-1.5 shadow-2xs"
+      >
+        <Plus className="h-3.5 w-3.5" />
+        Add Property
+      </Button>
+      <Button
+        onClick={openAddUnitModal}
+        size="sm"
+        className="h-8 bg-primary text-primary-foreground font-semibold text-xs flex items-center gap-1.5 shadow-2xs"
+      >
+        <Plus className="h-3.5 w-3.5" />
+        Add Unit
+      </Button>
+    </div>
+  );
 
   const headerActions = (
     <Button
@@ -90,6 +251,10 @@ function PropertiesContent() {
       actionButton={headerActions}
     >
       <div className="space-y-6">
+        <div className="flex items-center justify-end">
+          {inventoryActions}
+        </div>
+
         {/* Master Projects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {projects.map((proj) => {
@@ -149,7 +314,7 @@ function PropertiesContent() {
             {/* Project Filter */}
             <Select value={selectedProjectId} onValueChange={(val) => val && setSelectedProjectId(val)}>
               <SelectTrigger className="w-[180px] text-xs h-9 bg-muted/30">
-                <SelectValue placeholder="All Projects" />
+                <span className="truncate text-left">{getProjectName(selectedProjectId)}</span>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="All">All Projects</SelectItem>
@@ -167,7 +332,9 @@ function PropertiesContent() {
               onValueChange={(val) => val && setStatusFilter(val as 'All' | 'Available' | 'Booked')}
             >
               <SelectTrigger className="w-[140px] text-xs h-9 bg-muted/30">
-                <SelectValue placeholder="All Status" />
+                <span className="truncate text-left">
+                  {statusFilter === 'All' ? 'All Status' : statusFilter}
+                </span>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="All">All Status</SelectItem>
@@ -179,7 +346,9 @@ function PropertiesContent() {
             {/* Type Filter */}
             <Select value={typeFilter} onValueChange={(val) => val && setTypeFilter(val)}>
               <SelectTrigger className="w-[130px] text-xs h-9 bg-muted/30">
-                <SelectValue placeholder="All Types" />
+                <span className="truncate text-left">
+                  {typeFilter === 'All' ? 'All Types' : typeFilter}
+                </span>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="All">All Types</SelectItem>
@@ -324,6 +493,248 @@ function PropertiesContent() {
         onClose={() => setIsConcurrencyModalOpen(false)}
         onFinished={() => loadProperties()}
       />
+
+      <Dialog open={isAddPropertyModalOpen} onOpenChange={(open) => !open && setIsAddPropertyModalOpen(false)}>
+        <DialogContent className="sm:max-w-[560px] p-6">
+          <DialogHeader>
+            <DialogTitle>Add Property</DialogTitle>
+            <DialogDescription>
+              Create a new project card with its first tower or phase.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCreateProperty} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="propertyName" className="text-xs">Property Name</Label>
+                <Input
+                  id="propertyName"
+                  value={propertyName}
+                  onChange={(event) => setPropertyName(event.target.value)}
+                  placeholder="Emerald Eco Villas"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Status</Label>
+                <Select
+                  value={propertyStatus}
+                  onValueChange={(val) => val && setPropertyStatus(val as ProjectStatus)}
+                >
+                  <SelectTrigger className="w-full bg-muted/30">
+                    <span className="truncate text-left">{propertyStatus}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['Planning', 'Under Construction', 'Ready to Move', 'Sold Out'].map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="propertyLocation" className="text-xs">Address / Location</Label>
+                <Input
+                  id="propertyLocation"
+                  value={propertyLocation}
+                  onChange={(event) => setPropertyLocation(event.target.value)}
+                  placeholder="12 Greenwood Valley"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="propertyCity" className="text-xs">City / Area</Label>
+                <Input
+                  id="propertyCity"
+                  value={propertyCity}
+                  onChange={(event) => setPropertyCity(event.target.value)}
+                  placeholder="Suburbs"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="propertyBuildingName" className="text-xs">First Tower / Phase</Label>
+                <Input
+                  id="propertyBuildingName"
+                  value={propertyBuildingName}
+                  onChange={(event) => setPropertyBuildingName(event.target.value)}
+                  placeholder="Phase 1"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="propertyTotalFloors" className="text-xs">Total Floors</Label>
+                <Input
+                  id="propertyTotalFloors"
+                  type="number"
+                  min="1"
+                  value={propertyTotalFloors}
+                  onChange={(event) => setPropertyTotalFloors(event.target.value)}
+                  placeholder="12"
+                  required
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsAddPropertyModalOpen(false)}
+                disabled={isCreatingProperty}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isCreatingProperty}>
+                {isCreatingProperty ? 'Adding...' : 'Add Property'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isAddUnitModalOpen} onOpenChange={(open) => !open && setIsAddUnitModalOpen(false)}>
+        <DialogContent className="sm:max-w-[560px] p-6">
+          <DialogHeader>
+            <DialogTitle>Add Property Unit</DialogTitle>
+            <DialogDescription>
+              Create a new available unit under a selected project and tower.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCreateUnit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Project</Label>
+                <Select value={addProjectId} onValueChange={(val) => val && handleAddProjectChange(val)}>
+                  <SelectTrigger className="w-full bg-muted/30">
+                    <span className="truncate text-left">{getProjectName(addProjectId)}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Building / Tower</Label>
+                <Select value={addBuildingId} onValueChange={(val) => val && setAddBuildingId(val)}>
+                  <SelectTrigger className="w-full bg-muted/30">
+                    <span className="truncate text-left">
+                      {addUnitBuildings.find((building) => building.id === addBuildingId)?.name || 'Select building'}
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {addUnitBuildings.map((building) => (
+                      <SelectItem key={building.id} value={building.id}>
+                        {building.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="unitNumber" className="text-xs">Unit Number</Label>
+                <Input
+                  id="unitNumber"
+                  value={unitNumber}
+                  onChange={(event) => setUnitNumber(event.target.value)}
+                  placeholder="A-501"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Unit Type</Label>
+                <Select value={unitType} onValueChange={(val) => val && setUnitType(val as UnitType)}>
+                  <SelectTrigger className="w-full bg-muted/30">
+                    <span className="truncate text-left">{unitType}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['1BHK', '2BHK', '3BHK', '4BHK', 'Penthouse', 'Studio', 'Villa'].map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="unitFloor" className="text-xs">Floor</Label>
+                <Input
+                  id="unitFloor"
+                  type="number"
+                  min="1"
+                  value={unitFloor}
+                  onChange={(event) => setUnitFloor(event.target.value)}
+                  placeholder="5"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="unitArea" className="text-xs">Area Sqft</Label>
+                <Input
+                  id="unitArea"
+                  type="number"
+                  min="1"
+                  value={unitArea}
+                  onChange={(event) => setUnitArea(event.target.value)}
+                  placeholder="1250"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="unitPrice" className="text-xs">Price</Label>
+                <Input
+                  id="unitPrice"
+                  type="number"
+                  min="1"
+                  value={unitPrice}
+                  onChange={(event) => setUnitPrice(event.target.value)}
+                  placeholder="450000"
+                  required
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsAddUnitModalOpen(false)}
+                disabled={isCreatingUnit}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isCreatingUnit || !addBuildingId}>
+                {isCreatingUnit ? 'Adding...' : 'Add Unit'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </DashboardShell>
   );
 }
