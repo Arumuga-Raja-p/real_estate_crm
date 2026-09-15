@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardMetrics, LEAD_STAGES } from '@/lib/types/crm';
 import { crmService } from '@/lib/crm-service';
 import { DashboardShell } from '@/components/layout/DashboardShell';
@@ -17,13 +17,11 @@ import {
   Building2,
   Calendar,
   DollarSign,
-  CheckCircle2,
   Clock,
   Plus,
   ArrowUpRight,
   Zap,
   Sparkles,
-  Building,
   TrendingUp,
   ChevronRight,
 } from 'lucide-react';
@@ -35,8 +33,13 @@ export default function DashboardPage() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [isConcurrencyModalOpen, setIsConcurrencyModalOpen] = useState(false);
 
+  const loadDashboard = useCallback(async () => {
+    const data = await crmService.getDashboardMetrics();
+    setMetrics(data);
+  }, []);
+
   useEffect(() => {
-    loadDashboard();
+    void Promise.resolve().then(loadDashboard);
 
     const handleUserChange = () => loadDashboard();
     window.addEventListener('crm-user-changed', handleUserChange);
@@ -45,12 +48,7 @@ export default function DashboardPage() {
       window.removeEventListener('crm-user-changed', handleUserChange);
       window.removeEventListener('crm-data-reset', handleUserChange);
     };
-  }, []);
-
-  const loadDashboard = async () => {
-    const data = await crmService.getDashboardMetrics();
-    setMetrics(data);
-  };
+  }, [loadDashboard]);
 
   if (!metrics) {
     return (
@@ -73,9 +71,9 @@ export default function DashboardPage() {
       variant="outline"
       size="sm"
       onClick={() => setIsConcurrencyModalOpen(true)}
-      className="h-8 text-xs border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 flex items-center gap-1.5 cursor-pointer"
+      className="h-9 rounded-full text-xs border-border bg-card text-foreground hover:bg-muted flex items-center gap-1.5 cursor-pointer"
     >
-      <Zap className="h-3.5 w-3.5 text-amber-600 fill-amber-500" />
+      <Zap className="h-3.5 w-3.5 text-foreground" />
       Test Concurrency
     </Button>
   );
@@ -85,7 +83,7 @@ export default function DashboardPage() {
       title="Dashboard Overview"
       actionButton={actionButtons}
     >
-      <div className="space-y-6">
+      <div className="space-y-7">
         {/* Page Title & Main Actions Row */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -102,14 +100,14 @@ export default function DashboardPage() {
             <Button
               variant="outline"
               onClick={() => setIsLeadModalOpen(true)}
-              className="h-10 px-4 text-sm font-medium flex items-center gap-2 shadow-2xs hover:bg-accent cursor-pointer transition-colors"
+              className="h-10 rounded-full px-5 text-sm font-medium flex items-center gap-2 shadow-2xs hover:bg-muted cursor-pointer transition-colors"
             >
               <Plus className="h-4 w-4" />
               Add Lead
             </Button>
             <Button
               onClick={() => setIsBookingModalOpen(true)}
-              className="h-10 px-5 text-sm font-semibold bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-2 shadow-xs cursor-pointer transition-colors"
+              className="h-10 rounded-full px-5 text-sm font-semibold bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-2 shadow-xs cursor-pointer transition-colors"
             >
               <Sparkles className="h-4 w-4" />
               Book Unit
@@ -120,12 +118,14 @@ export default function DashboardPage() {
         {/* 4 Signature shadcn Metric Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {/* Total Revenue */}
-          <Card className="shadow-2xs">
+          <Card className="shadow-xs border-border/60">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <CardTitle className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/65">
                 Total Closed Revenue
               </CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
+                <DollarSign className="h-4 w-4 text-foreground" />
+              </span>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-foreground">
@@ -141,30 +141,34 @@ export default function DashboardPage() {
           </Card>
 
           {/* Active Leads */}
-          <Card className="shadow-2xs">
+          <Card className="shadow-xs border-transparent bg-primary text-primary-foreground">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Active Inquiries
               </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-foreground text-primary">
+                <Users className="h-4 w-4" />
+              </span>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">
+              <div className="text-2xl font-bold text-primary-foreground">
                 {metrics.activeLeads} Leads
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-primary-foreground/65 mt-1">
                 {metrics.totalLeads} total records in pipeline
               </p>
             </CardContent>
           </Card>
 
           {/* Available Units */}
-          <Card className="shadow-2xs">
+          <Card className="shadow-xs border-border/60">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Available Inventory
               </CardTitle>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
+                <Building2 className="h-4 w-4 text-foreground" />
+              </span>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-foreground">
@@ -177,18 +181,20 @@ export default function DashboardPage() {
           </Card>
 
           {/* Follow-ups Today */}
-          <Card className="shadow-2xs">
+          <Card className="shadow-xs border-border/60">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Follow-Ups Today
               </CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
+                <Clock className="h-4 w-4 text-foreground" />
+              </span>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-foreground">
                 {metrics.followUpsToday} Due
               </div>
-              <p className="text-xs text-amber-600 font-medium mt-1">
+              <p className="text-xs text-muted-foreground font-medium mt-1">
                 Requires sales representative action
               </p>
             </CardContent>

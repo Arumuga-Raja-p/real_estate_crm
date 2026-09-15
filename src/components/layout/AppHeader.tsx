@@ -5,8 +5,7 @@ import { crmService } from '@/lib/crm-service';
 import { Profile } from '@/lib/types/crm';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Search, Bell, Shield, UserCheck, Sparkles, Building2 } from 'lucide-react';
+import { Search, Shield, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -20,22 +19,22 @@ export function AppHeader({ title, subtitle, actionButton }: AppHeaderProps) {
   const [currentUser, setCurrentUser] = useState<Profile | null>(null);
 
   useEffect(() => {
-    setCurrentUser(crmService.getCurrentUser());
+    void Promise.resolve().then(() => setCurrentUser(crmService.getCurrentUser()));
     const handleUserChange = () => setCurrentUser(crmService.getCurrentUser());
     window.addEventListener('crm-user-changed', handleUserChange);
     return () => window.removeEventListener('crm-user-changed', handleUserChange);
   }, []);
 
   return (
-    <header className="h-16 border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-30 px-6 flex items-center justify-between">
+    <header className="min-h-20 border-b border-border/60 bg-background/95 backdrop-blur-sm sticky top-0 z-30 px-8 py-4 flex items-center justify-between gap-6">
       {/* Left: Breadcrumbs / Title */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 min-w-0">
         {title ? (
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-tight">
               {title}
             </h1>
-            {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
+            {subtitle && <p className="text-sm text-muted-foreground mt-1 max-w-xl leading-snug">{subtitle}</p>}
           </div>
         ) : (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -47,15 +46,15 @@ export function AppHeader({ title, subtitle, actionButton }: AppHeaderProps) {
       </div>
 
       {/* Right: Search, Notifications, Actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 shrink-0">
         {/* Global Search */}
-        <div className="relative hidden md:block w-64">
+        <div className="relative hidden lg:block w-80">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             placeholder="Search leads, units, records..."
-            className="h-8 pl-8 pr-10 text-xs bg-muted/40 border-border/80 focus-visible:ring-1"
+            className="h-10 rounded-full pl-9 pr-10 text-sm bg-muted/60 border-transparent focus-visible:ring-1"
           />
-          <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 select-none items-center gap-1 rounded border border-border bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground flex">
+          <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-5 select-none items-center gap-1 rounded-full border border-border bg-background px-2 font-mono text-[10px] font-medium text-muted-foreground flex">
             ⌘K
           </kbd>
         </div>
@@ -76,10 +75,10 @@ export function AppHeader({ title, subtitle, actionButton }: AppHeaderProps) {
             )}
             <Badge
               variant={currentUser.role === 'admin' ? 'default' : 'secondary'}
-              className={`text-[10px] font-semibold py-0.5 px-2 flex items-center gap-1 uppercase tracking-wider cursor-pointer ${
+              className={`rounded-full text-[10px] font-semibold py-1 px-3 flex items-center gap-1 uppercase tracking-wider cursor-pointer ${
                 currentUser.role === 'admin'
-                  ? 'bg-purple-700 hover:bg-purple-800 text-white'
-                  : 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-900'
+                  ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                  : 'bg-muted text-foreground border-border'
               }`}
             >
               {currentUser.role === 'admin' ? (

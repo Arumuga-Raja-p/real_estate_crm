@@ -76,14 +76,14 @@ export default function LeadsPage() {
     setIsBookingModalOpen(true);
   };
 
-  const headerActions = (
+  const leadActions = (
     <div className="flex items-center gap-2">
       {/* View Toggle */}
       <div className="bg-muted p-1 rounded-md border border-border flex items-center shadow-2xs">
         <button
           type="button"
           onClick={() => setViewMode('kanban')}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold transition ${
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer ${
             viewMode === 'kanban'
               ? 'bg-background text-foreground shadow-2xs'
               : 'text-muted-foreground hover:text-foreground'
@@ -95,7 +95,7 @@ export default function LeadsPage() {
         <button
           type="button"
           onClick={() => setViewMode('table')}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold transition ${
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold transition cursor-pointer ${
             viewMode === 'table'
               ? 'bg-background text-foreground shadow-2xs'
               : 'text-muted-foreground hover:text-foreground'
@@ -109,7 +109,7 @@ export default function LeadsPage() {
       <Button
         onClick={() => setIsLeadModalOpen(true)}
         size="sm"
-        className="h-8 text-xs font-semibold flex items-center gap-1.5 shadow-2xs"
+        className="h-8 text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer"
       >
         <Plus className="h-3.5 w-3.5" />
         Add Lead
@@ -119,11 +119,21 @@ export default function LeadsPage() {
 
   return (
     <DashboardShell
-      title="Lead Management"
-      subtitle="Track buyer prospects through the 7-stage pipeline."
-      actionButton={headerActions}
+      title="Pipeline"
     >
       <div className="space-y-6">
+        {/* Page Title & Main Actions Row */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">
+              Lead Management
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Track buyer prospects through the 7-stage pipeline.
+            </p>
+          </div>
+          {leadActions}
+        </div>
         {/* Search & Filter Bar */}
         <div className="flex flex-col md:flex-row items-center gap-3 bg-card p-3 rounded-lg border border-border shadow-2xs">
           {/* Search */}

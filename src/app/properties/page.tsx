@@ -216,7 +216,7 @@ function PropertiesContent() {
         }}
         variant="outline"
         size="sm"
-        className="h-8 font-semibold text-xs flex items-center gap-1.5 shadow-2xs"
+        className="h-9 rounded-full border-border bg-card px-4 font-semibold text-xs flex items-center gap-1.5 shadow-2xs"
       >
         <Plus className="h-3.5 w-3.5" />
         Add Property
@@ -224,7 +224,7 @@ function PropertiesContent() {
       <Button
         onClick={openAddUnitModal}
         size="sm"
-        className="h-8 bg-primary text-primary-foreground font-semibold text-xs flex items-center gap-1.5 shadow-2xs"
+        className="h-9 rounded-full bg-primary text-primary-foreground px-4 font-semibold text-xs flex items-center gap-1.5 shadow-2xs"
       >
         <Plus className="h-3.5 w-3.5" />
         Add Unit
@@ -237,21 +237,28 @@ function PropertiesContent() {
       onClick={() => setIsConcurrencyModalOpen(true)}
       variant="outline"
       size="sm"
-      className="h-8 border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 font-semibold text-xs flex items-center gap-1.5 shadow-2xs"
+      className="h-9 rounded-full border-border bg-card text-foreground hover:bg-muted font-semibold text-xs flex items-center gap-1.5 shadow-2xs"
     >
-      <Zap className="h-3.5 w-3.5 text-amber-600 fill-amber-500" />
+      <Zap className="h-3.5 w-3.5 text-foreground" />
       Simulate Concurrency Collision
     </Button>
   );
 
   return (
     <DashboardShell
-      title="Property Inventory"
-      subtitle="Browse projects, towers, floor inventory, and unit reservation status."
+      title="Inventory & Units"
       actionButton={headerActions}
     >
       <div className="space-y-6">
-        <div className="flex items-center justify-end">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">
+              Property Inventory
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Browse projects, towers, floor inventory, and unit reservation status.
+            </p>
+          </div>
           {inventoryActions}
         </div>
 
@@ -263,10 +270,10 @@ function PropertiesContent() {
               <div
                 key={proj.id}
                 onClick={() => setSelectedProjectId(isSelected ? 'All' : proj.id)}
-                className={`group relative overflow-hidden rounded-lg border p-4 transition-all duration-200 cursor-pointer ${
+                className={`group relative overflow-hidden rounded-2xl border p-5 transition-all duration-200 cursor-pointer ${
                   isSelected
-                    ? 'border-primary ring-2 ring-primary/20 bg-card shadow-sm'
-                    : 'border-border bg-card hover:border-border/80 hover:shadow-2xs'
+                    ? 'border-foreground bg-card shadow-sm'
+                    : 'border-border/70 bg-card hover:border-foreground/20 hover:shadow-2xs'
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -283,8 +290,8 @@ function PropertiesContent() {
                     variant="outline"
                     className={`text-[10px] ${
                       proj.status === 'Ready to Move'
-                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : 'border-blue-200 bg-blue-50 text-blue-700'
+                        ? 'border-border bg-background text-foreground'
+                        : 'border-border bg-muted text-foreground'
                     }`}
                   >
                     {proj.status}
@@ -304,7 +311,7 @@ function PropertiesContent() {
         </div>
 
         {/* Unit Matrix Filter Bar */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-card p-3 rounded-lg border border-border shadow-2xs">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-card p-3 rounded-2xl border border-border/70 shadow-2xs">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold uppercase tracking-wider">
               <Filter className="h-3.5 w-3.5" />
@@ -313,7 +320,7 @@ function PropertiesContent() {
 
             {/* Project Filter */}
             <Select value={selectedProjectId} onValueChange={(val) => val && setSelectedProjectId(val)}>
-              <SelectTrigger className="w-[180px] text-xs h-9 bg-muted/30">
+              <SelectTrigger className="w-[180px] text-xs h-9 rounded-full bg-muted/40 border-transparent">
                 <span className="truncate text-left">{getProjectName(selectedProjectId)}</span>
               </SelectTrigger>
               <SelectContent>
@@ -331,7 +338,7 @@ function PropertiesContent() {
               value={statusFilter}
               onValueChange={(val) => val && setStatusFilter(val as 'All' | 'Available' | 'Booked')}
             >
-              <SelectTrigger className="w-[140px] text-xs h-9 bg-muted/30">
+              <SelectTrigger className="w-[140px] text-xs h-9 rounded-full bg-muted/40 border-transparent">
                 <span className="truncate text-left">
                   {statusFilter === 'All' ? 'All Status' : statusFilter}
                 </span>
@@ -345,7 +352,7 @@ function PropertiesContent() {
 
             {/* Type Filter */}
             <Select value={typeFilter} onValueChange={(val) => val && setTypeFilter(val)}>
-              <SelectTrigger className="w-[130px] text-xs h-9 bg-muted/30">
+              <SelectTrigger className="w-[130px] text-xs h-9 rounded-full bg-muted/40 border-transparent">
                 <span className="truncate text-left">
                   {typeFilter === 'All' ? 'All Types' : typeFilter}
                 </span>
@@ -363,11 +370,11 @@ function PropertiesContent() {
 
           {/* Availability Counters */}
           <div className="flex items-center gap-2 text-xs">
-            <span className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <span className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-background text-foreground border border-border font-medium">
+              <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
               {availableCount} Available
             </span>
-            <span className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-muted text-muted-foreground border border-border font-medium">
+            <span className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-muted text-muted-foreground border border-border font-medium">
               <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
               {bookedCount} Booked
             </span>

@@ -16,12 +16,12 @@ export function ThemeToggle() {
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
-    setMounted(true);
+    void Promise.resolve().then(() => setMounted(true));
   }, []);
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="sm" className="h-8 w-8 px-0 text-muted-foreground">
+      <Button variant="ghost" size="sm" className="h-10 w-10 rounded-full px-0 text-muted-foreground">
         <Sun className="h-4 w-4" />
       </Button>
     );
@@ -29,7 +29,7 @@ export function ThemeToggle() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background hover:bg-accent text-foreground transition-colors cursor-pointer">
+      <DropdownMenuTrigger className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background hover:bg-muted text-foreground transition-colors cursor-pointer">
         <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
         <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
         <span className="sr-only">Toggle theme</span>
@@ -37,21 +37,21 @@ export function ThemeToggle() {
       <DropdownMenuContent align="end" className="w-32">
         <DropdownMenuItem
           onClick={() => setTheme('light')}
-          className={`cursor-pointer text-xs ${theme === 'light' ? 'bg-accent font-semibold' : ''}`}
+          className={`cursor-pointer text-xs ${theme === 'light' ? 'bg-muted font-semibold' : ''}`}
         >
-          <Sun className="h-3.5 w-3.5 mr-2 text-amber-500" />
+          <Sun className="h-3.5 w-3.5 mr-2 text-foreground" />
           Light Mode
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme('dark')}
-          className={`cursor-pointer text-xs ${theme === 'dark' ? 'bg-accent font-semibold' : ''}`}
+          className={`cursor-pointer text-xs ${theme === 'dark' ? 'bg-muted font-semibold' : ''}`}
         >
-          <Moon className="h-3.5 w-3.5 mr-2 text-indigo-400" />
+          <Moon className="h-3.5 w-3.5 mr-2 text-foreground" />
           Dark Mode
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme('system')}
-          className={`cursor-pointer text-xs ${theme === 'system' ? 'bg-accent font-semibold' : ''}`}
+          className={`cursor-pointer text-xs ${theme === 'system' ? 'bg-muted font-semibold' : ''}`}
         >
           <span className="h-3.5 w-3.5 mr-2 flex items-center justify-center font-mono text-[10px]">💻</span>
           System
