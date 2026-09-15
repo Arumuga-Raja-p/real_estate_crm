@@ -266,8 +266,8 @@ cp .env.example .env.local
 ```
 Configure your Supabase credentials:
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://zpkzxrqesavzvnevbyas.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_kr9FOJ9ErLY7dl1DZtj7PA_xsLaDbJS
+NEXT_PUBLIC_SUPABASE_URL=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+NEXT_PUBLIC_SUPABASE_ANON_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
 ### 3. Database Migration (Supabase SQL Editor)
