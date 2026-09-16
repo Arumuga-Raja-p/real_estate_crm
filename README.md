@@ -8,7 +8,7 @@ Built with **Next.js (App Router, Turbopack, TypeScript)**, **Tailwind CSS v4**,
 
 ## Live Deployment & Repository
 
-- **Live Deployed Application**: [https://estateflow-crm.netlify.app](https://estateflow-crm.netlify.app) *(or your deployed Netlify URL)*
+- **Live Deployed Application**: [https://realestatee-crm.netlify.app](https://realestatee-crm.netlify.app)
 - **GitHub Repository**: [https://github.com/Arumuga-Raja-p/real_estate_crm](https://github.com/Arumuga-Raja-p/real_estate_crm)
 
 ---
