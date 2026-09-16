@@ -422,7 +422,7 @@ function PropertiesContent() {
                         className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 ${
                           isBooked
                             ? 'bg-muted text-muted-foreground'
-                            : 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                            : 'border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
                         }`}
                       >
                         {isBooked ? (

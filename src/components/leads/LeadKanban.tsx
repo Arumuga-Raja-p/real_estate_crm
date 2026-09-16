@@ -80,10 +80,10 @@ export function LeadKanban({ leads, onStageChange, onBookLead }: LeadKanbanProps
             onDragEnter={() => handleDragEnter(stage)}
             onDragLeave={(e) => handleDragLeave(e, stage)}
             onDrop={(e) => handleDrop(e, stage)}
-            className={`flex-shrink-0 w-80 rounded-xl border p-3 flex flex-col snap-start transition-all duration-200 ${
+            className={`flex-shrink-0 w-80 rounded-xl border-2 p-3 flex flex-col snap-start transition-all duration-200 ${
               isOver
                 ? 'bg-primary/5 border-primary ring-2 ring-primary/30 scale-[1.01]'
-                : 'bg-muted/40 border-border/80'
+                : 'bg-muted/40 border-border'
             }`}
           >
             {/* Stage Column Header */}
@@ -94,7 +94,7 @@ export function LeadKanban({ leads, onStageChange, onBookLead }: LeadKanbanProps
                     isBooked
                       ? 'bg-emerald-500'
                       : isLost
-                      ? 'bg-neutral-400'
+                      ? 'bg-muted-foreground'
                       : stage === 'Interested'
                       ? 'bg-amber-500'
                       : 'bg-primary'
@@ -120,7 +120,7 @@ export function LeadKanban({ leads, onStageChange, onBookLead }: LeadKanbanProps
             )}
 
             {/* Cards List */}
-            <div className="space-y-2.5 flex-1 overflow-y-auto max-h-[calc(100vh-280px)] pr-0.5">
+            <div className="space-y-2.5 flex-1 overflow-y-auto max-h-[calc(100vh-280px)] pr-2.5">
               {stageLeads.length === 0 ? (
                 <div className="py-12 text-center text-xs text-muted-foreground italic border border-dashed border-border/60 rounded-lg">
                   Drag leads here

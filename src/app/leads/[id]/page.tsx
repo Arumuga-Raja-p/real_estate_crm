@@ -313,7 +313,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                           </p>
 
                           {note.follow_up_date && (
-                            <div className="pt-1 flex items-center gap-1 text-[11px] text-amber-800 font-medium bg-amber-50 px-2 py-0.5 rounded w-fit border border-amber-200">
+                            <div className="pt-1 flex items-center gap-1 text-[11px] text-amber-800 dark:text-amber-300 font-medium bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded w-fit border border-amber-200 dark:border-amber-800">
                               <Calendar className="h-3 w-3 text-amber-600" />
                               <span>
                                 Scheduled Follow-up: {new Date(note.follow_up_date).toLocaleDateString()}

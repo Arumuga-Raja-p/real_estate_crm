@@ -157,14 +157,14 @@ export function BookingModal({
       <DialogContent className="sm:max-w-[540px] p-6 bg-card text-card-foreground border-border">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-bold text-neutral-900">
+              <DialogTitle className="text-xl font-bold text-foreground">
                 Confirm Property Booking
               </DialogTitle>
-              <DialogDescription className="text-xs text-neutral-500">
+              <DialogDescription className="text-xs text-muted-foreground">
                 Assign unit to customer and execute concurrency-safe lock.
               </DialogDescription>
             </div>
@@ -172,12 +172,12 @@ export function BookingModal({
         </DialogHeader>
 
         {conflictError && (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 flex items-start gap-3">
+          <div className="rounded-lg border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/60 p-4 text-sm text-rose-800 dark:text-rose-300 flex items-start gap-3">
             <ShieldAlert className="h-5 w-5 text-rose-600 mt-0.5 shrink-0" />
             <div>
               <h4 className="font-semibold">Booking Conflict Detected!</h4>
-              <p className="text-xs text-rose-700 mt-1">{conflictError}</p>
-              <p className="text-[11px] text-rose-600 mt-1">
+              <p className="text-xs text-rose-700 dark:text-rose-300 mt-1">{conflictError}</p>
+              <p className="text-[11px] text-rose-600 dark:text-rose-400 mt-1">
                 Our concurrency safeguard prevented a duplicate booking. Please choose another available unit below.
               </p>
             </div>
@@ -187,12 +187,12 @@ export function BookingModal({
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           {/* Lead Selection */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-neutral-700 flex items-center gap-1.5">
-              <User className="h-3.5 w-3.5 text-neutral-500" />
+            <Label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+              <User className="h-3.5 w-3.5 text-muted-foreground" />
               Select Customer / Lead
             </Label>
             <Select value={selectedLeadId} onValueChange={(val) => val && setSelectedLeadId(val)}>
-              <SelectTrigger className="w-full bg-neutral-50/50">
+              <SelectTrigger className="w-full bg-muted/50">
                 <span className="truncate text-left">
                   {currentLead ? getLeadLabel(currentLead) : 'Choose a lead...'}
                 </span>
@@ -206,7 +206,7 @@ export function BookingModal({
               </SelectContent>
             </Select>
             {currentLead && (
-              <div className="text-[11px] text-neutral-500 flex items-center justify-between px-1">
+              <div className="text-[11px] text-muted-foreground flex items-center justify-between px-1">
                 <span>Budget: ${currentLead.budget_min.toLocaleString()} - ${currentLead.budget_max.toLocaleString()}</span>
                 <span>Current Stage: <strong>{currentLead.stage}</strong></span>
               </div>
@@ -215,12 +215,12 @@ export function BookingModal({
 
           {/* Unit Selection */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-neutral-700 flex items-center gap-1.5">
-              <Building2 className="h-3.5 w-3.5 text-neutral-500" />
+            <Label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+              <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
               Select Available Unit
             </Label>
             <Select value={selectedUnitId} onValueChange={(val) => val && handleUnitChange(val)}>
-              <SelectTrigger className="w-full bg-neutral-50/50">
+              <SelectTrigger className="w-full bg-muted/50">
                 <span className="truncate text-left">
                   {currentUnit ? getUnitLabel(currentUnit) : 'Choose an available unit...'}
                 </span>
@@ -234,12 +234,12 @@ export function BookingModal({
               </SelectContent>
             </Select>
             {currentUnit && (
-              <div className="p-3 bg-neutral-50 rounded-lg border border-neutral-200/80 text-xs space-y-1">
-                <div className="flex justify-between font-medium text-neutral-800">
+              <div className="p-3 bg-muted/50 rounded-lg border border-border/80 text-xs space-y-1">
+                <div className="flex justify-between font-medium text-foreground">
                   <span>Unit Price:</span>
                   <span className="text-sm font-bold text-indigo-600">${currentUnit.price.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-neutral-500 text-[11px]">
+                <div className="flex justify-between text-muted-foreground text-[11px]">
                   <span>Layout & Floor:</span>
                   <span>{currentUnit.type} • Floor {currentUnit.floor} ({currentUnit.area_sqft} sqft)</span>
                 </div>
@@ -249,7 +249,7 @@ export function BookingModal({
 
           {/* Token Amount */}
           <div className="space-y-1.5">
-            <Label htmlFor="tokenAmount" className="text-xs font-semibold text-neutral-700">
+            <Label htmlFor="tokenAmount" className="text-xs font-semibold text-foreground">
               Booking Token / Advance Amount ($)
             </Label>
             <Input
@@ -260,13 +260,13 @@ export function BookingModal({
               onChange={(e) => setBookingAmount(e.target.value)}
               placeholder="e.g. 25000"
               required
-              className="bg-neutral-50/50"
+              className="bg-muted/50"
             />
           </div>
 
           {/* Notes */}
           <div className="space-y-1.5">
-            <Label htmlFor="bookingNotes" className="text-xs font-semibold text-neutral-700">
+            <Label htmlFor="bookingNotes" className="text-xs font-semibold text-foreground">
               Booking Agreement Notes
             </Label>
             <Input
@@ -275,11 +275,11 @@ export function BookingModal({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Payment mode, receipt #, special terms..."
-              className="bg-neutral-50/50"
+              className="bg-muted/50"
             />
           </div>
 
-          <DialogFooter className="pt-4 border-t border-neutral-100 flex items-center justify-between sm:justify-end gap-2">
+          <DialogFooter className="pt-4 border-t border-border flex items-center justify-between sm:justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               Cancel
             </Button>

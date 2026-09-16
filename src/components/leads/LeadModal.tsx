@@ -95,12 +95,12 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
       <DialogContent className="sm:max-w-[560px] p-6 bg-card text-card-foreground border-border">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
               <UserPlus className="h-5 w-5" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-bold text-neutral-900">Add New Lead</DialogTitle>
-              <DialogDescription className="text-xs text-neutral-500">
+              <DialogTitle className="text-xl font-bold text-foreground">Add New Lead</DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground">
                 Register a prospective property buyer into the sales pipeline.
               </DialogDescription>
             </div>
@@ -111,7 +111,7 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
           {/* Name Row */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label htmlFor="firstName" className="text-xs font-semibold text-neutral-700">
+              <Label htmlFor="firstName" className="text-xs font-semibold text-foreground">
                 First Name *
               </Label>
               <Input
@@ -123,7 +123,7 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="lastName" className="text-xs font-semibold text-neutral-700">
+              <Label htmlFor="lastName" className="text-xs font-semibold text-foreground">
                 Last Name *
               </Label>
               <Input
@@ -139,7 +139,7 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
           {/* Contact Row */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label htmlFor="phone" className="text-xs font-semibold text-neutral-700">
+              <Label htmlFor="phone" className="text-xs font-semibold text-foreground">
                 Phone Number *
               </Label>
               <Input
@@ -151,7 +151,7 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="email" className="text-xs font-semibold text-neutral-700">
+              <Label htmlFor="email" className="text-xs font-semibold text-foreground">
                 Email Address
               </Label>
               <Input
@@ -167,7 +167,7 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
           {/* Budget Range */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label htmlFor="budgetMin" className="text-xs font-semibold text-neutral-700">
+              <Label htmlFor="budgetMin" className="text-xs font-semibold text-foreground">
                 Min Budget ($)
               </Label>
               <Input
@@ -178,7 +178,7 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="budgetMax" className="text-xs font-semibold text-neutral-700">
+              <Label htmlFor="budgetMax" className="text-xs font-semibold text-foreground">
                 Max Budget ($)
               </Label>
               <Input
@@ -193,7 +193,7 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
           {/* Preferences & Source */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-neutral-700">Preferred Unit Type</Label>
+              <Label className="text-xs font-semibold text-foreground">Preferred Unit Type</Label>
               <Select value={preferredType} onValueChange={(val) => val && setPreferredType(val)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -209,7 +209,7 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-neutral-700">Lead Source</Label>
+              <Label className="text-xs font-semibold text-foreground">Lead Source</Label>
               <Select value={source} onValueChange={(val) => val && setSource(val as LeadSource)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -229,7 +229,7 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
           {/* Stage & Sales Assignment */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-neutral-700">Pipeline Stage</Label>
+              <Label className="text-xs font-semibold text-foreground">Pipeline Stage</Label>
               <Select value={stage} onValueChange={(val) => val && setStage(val as LeadStage)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -244,8 +244,8 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-neutral-700 flex items-center gap-1">
-                <UserCheck className="h-3.5 w-3.5 text-neutral-500" />
+              <Label className="text-xs font-semibold text-foreground flex items-center gap-1">
+                <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
                 Assign Sales Rep
               </Label>
               <Select value={assignedTo} onValueChange={(val) => val && setAssignedTo(val)}>
@@ -263,7 +263,7 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
             </div>
           </div>
 
-          <DialogFooter className="pt-4 border-t border-neutral-100">
+          <DialogFooter className="pt-4 border-t border-border">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               Cancel
             </Button>

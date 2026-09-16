@@ -155,7 +155,7 @@ export default function DashboardPage() {
           {/* Total Revenue */}
           <Card className="shadow-xs border-border/60">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/65">
+              <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Total Closed Revenue
               </CardTitle>
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
@@ -216,20 +216,20 @@ export default function DashboardPage() {
           </Card>
 
           {/* Follow-ups Today */}
-          <Card className="shadow-xs border-border/60">
+          <Card className="shadow-xs border-transparent bg-primary text-primary-foreground">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Follow-Ups Today
               </CardTitle>
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
-                <Clock className="h-4 w-4 text-foreground" />
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-foreground text-primary">
+                <Clock className="h-4 w-4" />
               </span>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">
+              <div className="text-2xl font-bold text-primary-foreground">
                 {metrics.followUpsToday} Due
               </div>
-              <p className="text-xs text-muted-foreground font-medium mt-1">
+              <p className="text-xs text-primary-foreground/65 font-medium mt-1">
                 Requires sales representative action
               </p>
             </CardContent>
@@ -545,7 +545,7 @@ export default function DashboardPage() {
                 Appointments, follow-up calls, and site visits scheduled by sales employees.
               </CardDescription>
             </div>
-            <Badge variant="outline" className="text-xs border-amber-300 bg-amber-50 text-amber-800">
+            <Badge variant="outline" className="text-xs border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">
               {metrics.upcomingFollowUps.length} Pending Actions
             </Badge>
           </CardHeader>
@@ -579,7 +579,7 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-[11px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                      <span className="text-[11px] font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800">
                         Due: {item.follow_up_date ? new Date(item.follow_up_date).toLocaleDateString() : 'Today'}
                       </span>
                       {item.lead && (

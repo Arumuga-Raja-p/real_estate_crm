@@ -207,7 +207,7 @@ export default function BookingsPage() {
                     <TableCell>
                       <Badge
                         variant="outline"
-                        className="bg-emerald-50 text-emerald-700 border-emerald-300 text-[10px] font-bold uppercase"
+                        className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 text-[10px] font-bold uppercase"
                       >
                         {booking.status}
                       </Badge>

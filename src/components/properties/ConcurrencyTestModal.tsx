@@ -120,14 +120,14 @@ export function ConcurrencyTestModal({
       <DialogContent className="sm:max-w-[640px] p-6 bg-card text-card-foreground border-border">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
               <Zap className="h-5 w-5 fill-amber-500" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-bold text-neutral-900 flex items-center gap-2">
+              <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2">
                 Double-Booking Concurrency Test
               </DialogTitle>
-              <DialogDescription className="text-xs text-neutral-500">
+              <DialogDescription className="text-xs text-muted-foreground">
                 Fires 2 simultaneous requests at the exact same millisecond to book the same unit.
               </DialogDescription>
             </div>
@@ -136,19 +136,19 @@ export function ConcurrencyTestModal({
 
         <div className="space-y-4 pt-2">
           {targetUnit ? (
-            <div className="p-3 bg-neutral-50 rounded-lg border border-neutral-200 text-xs flex justify-between items-center">
+            <div className="p-3 bg-muted/50 rounded-lg border border-border text-xs flex justify-between items-center">
               <div>
-                <span className="font-semibold text-neutral-800">Target Unit for Clash: </span>
+                <span className="font-semibold text-foreground">Target Unit for Clash: </span>
                 <span className="font-bold text-indigo-600">
                   {targetUnit.unit_number} ({targetUnit.type})
                 </span>
               </div>
-              <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-300">
+              <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800">
                 Initial Status: Available
               </Badge>
             </div>
           ) : (
-            <div className="p-3 bg-rose-50 rounded-lg border border-rose-200 text-xs text-rose-700">
+            <div className="p-3 bg-rose-50 dark:bg-rose-950/60 rounded-lg border border-rose-200 dark:border-rose-900 text-xs text-rose-700 dark:text-rose-300">
               No available units found. Please reset demo data to run this test.
             </div>
           )}
@@ -159,14 +159,14 @@ export function ConcurrencyTestModal({
             <div
               className={`p-4 rounded-xl border transition-all ${
                 results.userA.status === 'success'
-                  ? 'border-emerald-300 bg-emerald-50/50'
+                  ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/40'
                   : results.userA.status === 'error'
-                  ? 'border-rose-300 bg-rose-50/50'
-                  : 'border-neutral-200 bg-neutral-50/40'
+                  ? 'border-rose-300 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/40'
+                  : 'border-border bg-muted/40'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-neutral-800">Agent A: John Doe</span>
+                <span className="text-xs font-bold text-foreground">Agent A: John Doe</span>
                 {results.userA.status === 'success' && (
                   <Badge className="bg-emerald-600 text-white text-[10px] flex items-center gap-1">
                     <CheckCircle2 className="h-3 w-3" /> SECURED
@@ -178,11 +178,11 @@ export function ConcurrencyTestModal({
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-neutral-600 leading-relaxed min-h-[44px]">
+              <p className="text-xs text-muted-foreground leading-relaxed min-h-[44px]">
                 {results.userA.message}
               </p>
               {results.userA.timestamp && (
-                <span className="text-[10px] text-neutral-400 block mt-2">
+                <span className="text-[10px] text-muted-foreground/70 block mt-2">
                   Time: {results.userA.timestamp}
                 </span>
               )}
@@ -192,14 +192,14 @@ export function ConcurrencyTestModal({
             <div
               className={`p-4 rounded-xl border transition-all ${
                 results.userB.status === 'success'
-                  ? 'border-emerald-300 bg-emerald-50/50'
+                  ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/40'
                   : results.userB.status === 'error'
-                  ? 'border-rose-300 bg-rose-50/50'
-                  : 'border-neutral-200 bg-neutral-50/40'
+                  ? 'border-rose-300 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/40'
+                  : 'border-border bg-muted/40'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-neutral-800">Agent B: Rachel Green</span>
+                <span className="text-xs font-bold text-foreground">Agent B: Rachel Green</span>
                 {results.userB.status === 'success' && (
                   <Badge className="bg-emerald-600 text-white text-[10px] flex items-center gap-1">
                     <CheckCircle2 className="h-3 w-3" /> SECURED
@@ -211,23 +211,23 @@ export function ConcurrencyTestModal({
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-neutral-600 leading-relaxed min-h-[44px]">
+              <p className="text-xs text-muted-foreground leading-relaxed min-h-[44px]">
                 {results.userB.message}
               </p>
               {results.userB.timestamp && (
-                <span className="text-[10px] text-neutral-400 block mt-2">
+                <span className="text-[10px] text-muted-foreground/70 block mt-2">
                   Time: {results.userB.timestamp}
                 </span>
               )}
             </div>
           </div>
 
-          <div className="rounded-lg bg-blue-50/70 border border-blue-200 p-3 text-xs text-blue-900 flex items-start gap-2.5">
+          <div className="rounded-lg bg-blue-50/70 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900 p-3 text-xs text-blue-900 dark:text-blue-300 flex items-start gap-2.5">
             <ShieldCheck className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
             <div>
               <span className="font-semibold">Locking Guarantee: </span>
               In production with Supabase, PostgreSQL executes{' '}
-              <code className="bg-blue-100 px-1 py-0.5 rounded font-mono text-[11px]">
+              <code className="bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded font-mono text-[11px]">
                 SELECT FOR UPDATE
               </code>{' '}
               with a partial unique index, guaranteeing exactly one request wins while the other fails safely.
@@ -235,7 +235,7 @@ export function ConcurrencyTestModal({
           </div>
         </div>
 
-        <DialogFooter className="pt-4 border-t border-neutral-100 flex items-center justify-between sm:justify-end gap-2">
+        <DialogFooter className="pt-4 border-t border-border flex items-center justify-between sm:justify-end gap-2">
           <Button type="button" variant="outline" onClick={onClose} disabled={running}>
             Close
           </Button>

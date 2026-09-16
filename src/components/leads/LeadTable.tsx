@@ -40,54 +40,54 @@ export function LeadTable({ leads, onStageChange, onBookLead }: LeadTableProps) 
   return (
     <div className="rounded-lg border border-border bg-card shadow-2xs overflow-hidden">
       <Table>
-        <TableHeader className="bg-neutral-50/80">
+        <TableHeader className="bg-muted/50">
           <TableRow>
-            <TableHead className="font-semibold text-neutral-700">Lead Name</TableHead>
-            <TableHead className="font-semibold text-neutral-700">Contact</TableHead>
-            <TableHead className="font-semibold text-neutral-700">Budget Range</TableHead>
-            <TableHead className="font-semibold text-neutral-700">Source</TableHead>
-            <TableHead className="font-semibold text-neutral-700">Assigned To</TableHead>
-            <TableHead className="font-semibold text-neutral-700">Pipeline Stage</TableHead>
-            <TableHead className="font-semibold text-neutral-700 text-right">Actions</TableHead>
+            <TableHead className="font-semibold text-foreground">Lead Name</TableHead>
+            <TableHead className="font-semibold text-foreground">Contact</TableHead>
+            <TableHead className="font-semibold text-foreground">Budget Range</TableHead>
+            <TableHead className="font-semibold text-foreground">Source</TableHead>
+            <TableHead className="font-semibold text-foreground">Assigned To</TableHead>
+            <TableHead className="font-semibold text-foreground">Pipeline Stage</TableHead>
+            <TableHead className="font-semibold text-foreground text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {leads.map((lead) => (
-            <TableRow key={lead.id} className="hover:bg-neutral-50/60 transition-colors">
+            <TableRow key={lead.id} className="hover:bg-muted/60 transition-colors">
               <TableCell className="font-medium">
                 <Link
                   href={`/leads/${lead.id}`}
-                  className="font-bold text-neutral-900 hover:text-indigo-600 transition flex flex-col"
+                  className="font-bold text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 transition flex flex-col"
                 >
                   <span>
                     {lead.first_name} {lead.last_name}
                   </span>
-                  <span className="text-[11px] font-normal text-neutral-500">
+                  <span className="text-[11px] font-normal text-muted-foreground">
                     Interested in {lead.preferred_type || 'General Units'}
                   </span>
                 </Link>
               </TableCell>
 
-              <TableCell className="text-xs text-neutral-600">
-                <div className="font-mono text-neutral-700">{lead.phone}</div>
-                <div className="text-neutral-400 text-[11px] truncate max-w-[140px]">
+              <TableCell className="text-xs text-muted-foreground">
+                <div className="font-mono text-foreground">{lead.phone}</div>
+                <div className="text-muted-foreground/70 text-[11px] truncate max-w-[140px]">
                   {lead.email || 'No email'}
                 </div>
               </TableCell>
 
-              <TableCell className="text-xs font-medium text-neutral-800">
+              <TableCell className="text-xs font-medium text-foreground">
                 ${lead.budget_min.toLocaleString()} – ${lead.budget_max.toLocaleString()}
               </TableCell>
 
               <TableCell>
-                <span className="inline-flex items-center rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600 font-medium">
+                <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground font-medium">
                   {lead.source}
                 </span>
               </TableCell>
 
-              <TableCell className="text-xs text-neutral-600">
+              <TableCell className="text-xs text-muted-foreground">
                 <div className="flex items-center gap-1.5">
-                  <User className="h-3.5 w-3.5 text-neutral-400" />
+                  <User className="h-3.5 w-3.5 text-muted-foreground" />
                   <span>{lead.assigned_profile?.full_name || 'Unassigned'}</span>
                 </div>
               </TableCell>
@@ -100,7 +100,7 @@ export function LeadTable({ leads, onStageChange, onBookLead }: LeadTableProps) 
                       value={lead.stage}
                       onValueChange={(val) => val && onStageChange(lead.id, val as LeadStage)}
                     >
-                      <SelectTrigger className="h-7 w-[105px] text-[11px] border-dashed border-neutral-300">
+                      <SelectTrigger className="h-7 w-[105px] text-[11px] border-dashed border-border">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -122,14 +122,14 @@ export function LeadTable({ leads, onStageChange, onBookLead }: LeadTableProps) 
                       size="sm"
                       variant="outline"
                       onClick={() => onBookLead(lead)}
-                      className="h-7 text-xs border-emerald-300 bg-emerald-50/40 text-emerald-700 hover:bg-emerald-100"
+                      className="h-7 text-xs border-emerald-300 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950"
                     >
                       <CheckCircle2 className="h-3.5 w-3.5 mr-1 text-emerald-600" />
                       Book Unit
                     </Button>
                   )}
                   <Link href={`/leads/${lead.id}`}>
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-neutral-500">
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground">
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </Link>
