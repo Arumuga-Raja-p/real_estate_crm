@@ -1,0 +1,30 @@
+# Keeps the Supabase free-tier project from auto-pausing (pauses after ~7 days
+# with zero database activity) and keeps the Vercel deployment warm.
+#
+# Setup (one time, 2 minutes):
+#   1. Push this repo to GitHub.
+#   2. Go to repo Settings -> Secrets and variables -> Actions -> New secret.
+#   3. Name: SITE_URL | Value: your production URL, e.g. https://your-crm.vercel.app
+#      (no trailing slash).
+# That's it. The workflow pings /api/health every 3 days, and that endpoint
+# runs a tiny SELECT against Supabase, which resets the inactivity timer.
+# You can also run it manually anytime: Actions tab -> "Keep Supabase Alive" -> Run workflow.
+
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # 08:00 UTC every 3 days — well inside the 7-day pause window.
+    - cron: '0 8 */3 * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health endpoint (touches Supabase)
+        run: |
+          echo "Pinging ${{ secrets.SITE_URL }}/api/health ..."
+          curl -fsS --max-time 60 "${{ secrets.SITE_URL }}/api/health"
+          echo ""
+          echo "Keep-alive ping successful."
