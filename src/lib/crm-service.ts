@@ -140,22 +140,33 @@ export const crmService = {
   async updateProfile(userId: string, updates: Partial<Profile>): Promise<Profile> {
     const supabase = createClient();
     if (supabase) {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .update({
-            ...updates,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', userId)
-          .select()
-          .single();
-        if (!error && data) return data as Profile;
-      } catch {
-        // Fallback
+      // Live mode: write straight to Supabase and surface any error.
+      // (Never silently fall back to local mock here — otherwise the UI says
+      // "saved" while the database never changes.)
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId)
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+      // Keep the local session copy in sync so Navbar/dropdowns update instantly.
+      crmStore.init();
+      const liveIndex = crmStore.profiles.findIndex((p) => p.id === userId);
+      if (liveIndex !== -1) {
+        crmStore.profiles[liveIndex] = {
+          ...crmStore.profiles[liveIndex],
+          ...(data as Profile),
+        };
+        crmStore.persist();
       }
+      return data as Profile;
     }
 
+    // Mock mode (Supabase not configured): persist locally only.
     crmStore.init();
     const index = crmStore.profiles.findIndex((p) => p.id === userId);
     if (index !== -1) {

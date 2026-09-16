@@ -90,8 +90,8 @@ export default function ProfilePage() {
         icon: <CheckCircle2 className="h-4 w-4 text-emerald-600" />,
       });
       window.dispatchEvent(new Event('crm-user-changed'));
-    } catch {
-      toast.error('Failed to update profile.');
+    } catch (err) {
+      toast.error(`Failed to update profile: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setSaving(false);
     }
