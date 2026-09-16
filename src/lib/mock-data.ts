@@ -2,7 +2,7 @@ import { Lead, PropertyUnit, Project, Building, Booking, LeadNote, Profile } fro
 
 export const INITIAL_PROFILES: Profile[] = [
   {
-    id: 'user-admin-1',
+    id: '5df39a56-5ed8-43c9-8ebe-06a97ff5a44b',
     email: 'admin@realstate.com',
     full_name: 'Sarah Connor (Sales Director)',
     role: 'admin',
@@ -10,7 +10,7 @@ export const INITIAL_PROFILES: Profile[] = [
     updated_at: new Date().toISOString(),
   },
   {
-    id: 'user-rep-1',
+    id: 'b1359518-8298-4399-afd8-9cf00b2aee9a',
     email: 'john.doe@realstate.com',
     full_name: 'John Doe (Senior Executive)',
     role: 'sales_rep',
@@ -18,7 +18,7 @@ export const INITIAL_PROFILES: Profile[] = [
     updated_at: new Date().toISOString(),
   },
   {
-    id: 'user-rep-2',
+    id: 'f19146f0-b583-489e-90b2-ffc0c00381f8',
     email: 'rachel.green@realstate.com',
     full_name: 'Rachel Green (Property Consultant)',
     role: 'sales_rep',
