@@ -66,7 +66,7 @@ export function LeadKanban({ leads, onStageChange, onBookLead }: LeadKanbanProps
   };
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-6 pt-2 snap-x select-none">
+    <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-6 pt-2 snap-x snap-mandatory select-none -mx-4 px-4 sm:mx-0 sm:px-1">
       {LEAD_STAGES.map((stage) => {
         const stageLeads = getLeadsByStage(stage);
         const isBooked = stage === 'Booked';
@@ -80,7 +80,7 @@ export function LeadKanban({ leads, onStageChange, onBookLead }: LeadKanbanProps
             onDragEnter={() => handleDragEnter(stage)}
             onDragLeave={(e) => handleDragLeave(e, stage)}
             onDrop={(e) => handleDrop(e, stage)}
-            className={`flex-shrink-0 w-80 rounded-xl border-2 p-3 flex flex-col snap-start transition-all duration-200 ${
+            className={`flex-shrink-0 w-[85vw] max-w-80 sm:w-80 rounded-xl border-2 p-3 flex flex-col snap-start transition-all duration-200 ${
               isOver
                 ? 'bg-primary/5 border-primary ring-2 ring-primary/30 scale-[1.01]'
                 : 'bg-muted/40 border-border'
@@ -120,7 +120,7 @@ export function LeadKanban({ leads, onStageChange, onBookLead }: LeadKanbanProps
             )}
 
             {/* Cards List */}
-            <div className="space-y-2.5 flex-1 overflow-y-auto max-h-[calc(100vh-280px)] pr-2.5">
+            <div className="space-y-2.5 flex-1 overflow-y-auto max-h-[60vh] sm:max-h-[calc(100vh-280px)] pr-1 sm:pr-2.5">
               {stageLeads.length === 0 ? (
                 <div className="py-12 text-center text-xs text-muted-foreground italic border border-dashed border-border/60 rounded-lg">
                   Drag leads here

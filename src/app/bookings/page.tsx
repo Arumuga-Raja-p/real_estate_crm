@@ -49,7 +49,7 @@ export default function BookingsPage() {
     <Button
       onClick={() => setIsBookingModalOpen(true)}
       size="sm"
-      className="h-8 text-xs font-semibold flex items-center gap-1.5 shadow-2xs"
+      className="h-8 text-xs font-semibold flex items-center gap-1.5 shadow-2xs whitespace-nowrap"
     >
       <Plus className="h-3.5 w-3.5" />
       New Booking
@@ -62,9 +62,9 @@ export default function BookingsPage() {
       subtitle="Complete transaction audit log of units secured with token advances."
       actionButton={headerActions}
     >
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         {/* Metric Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           <Card className="shadow-2xs">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -118,9 +118,9 @@ export default function BookingsPage() {
         </div>
 
         {/* Bookings Table */}
-        <div className="rounded-lg border border-border bg-card shadow-2xs overflow-hidden">
+        <div className="rounded-lg border border-border bg-card shadow-2xs overflow-x-auto">
           {bookings.length === 0 ? (
-            <div className="p-12 text-center space-y-3">
+            <div className="p-8 sm:p-12 text-center space-y-3 min-w-[280px]">
               <ShieldCheck className="h-10 w-10 text-muted-foreground/60 mx-auto" />
               <p className="text-sm text-foreground font-semibold">
                 No units booked yet.
@@ -130,6 +130,7 @@ export default function BookingsPage() {
               </p>
             </div>
           ) : (
+            <div className="min-w-[760px]">
             <Table>
               <TableHeader className="bg-muted/40">
                 <TableRow>
@@ -216,6 +217,7 @@ export default function BookingsPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </div>
       </div>

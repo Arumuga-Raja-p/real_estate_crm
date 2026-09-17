@@ -127,6 +127,32 @@
   html {
     @apply font-sans;
   }
+  html,
+  body {
+    overflow-x: clip;
+    max-width: 100vw;
+  }
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
+  }
+}
+
+/* Responsive helpers: smooth horizontal scroll areas (kanban, tables) */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+@media (max-width: 640px) {
+  /* Prevent iOS auto-zoom on small inputs while keeping readability */
+  input, select, textarea {
+    font-size: 16px;
+  }
+  input.text-xs, select.text-xs, textarea.text-xs {
+    font-size: 14px;
+  }
 }
 
 /* Thin theme-aware scrollbar: black line in light mode, white line in dark mode */

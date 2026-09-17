@@ -154,7 +154,7 @@ export function BookingModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[540px] p-6 bg-card text-card-foreground border-border">
+      <DialogContent className="sm:max-w-[540px] w-[calc(100vw-2rem)] max-h-[90dvh] overflow-y-auto p-4 sm:p-6 bg-card text-card-foreground border-border">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">

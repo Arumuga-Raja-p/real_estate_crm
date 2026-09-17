@@ -77,9 +77,9 @@ export default function LeadsPage() {
   };
 
   const leadActions = (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
       {/* View Toggle */}
-      <div className="bg-muted p-1 rounded-md border border-border flex items-center shadow-2xs">
+      <div className="bg-muted p-1 rounded-md border border-border flex items-center shadow-2xs shrink-0">
         <button
           type="button"
           onClick={() => setViewMode('kanban')}
@@ -109,7 +109,7 @@ export default function LeadsPage() {
       <Button
         onClick={() => setIsLeadModalOpen(true)}
         size="sm"
-        className="h-8 text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer"
+        className="h-8 text-xs font-semibold flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer flex-1 sm:flex-none whitespace-nowrap"
       >
         <Plus className="h-3.5 w-3.5" />
         Add Lead
@@ -121,23 +121,23 @@ export default function LeadsPage() {
     <DashboardShell
       title="Pipeline"
     >
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         {/* Page Title & Main Actions Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-foreground">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               Lead Management
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               Track buyer prospects through the 7-stage pipeline.
             </p>
           </div>
           {leadActions}
         </div>
         {/* Search & Filter Bar */}
-        <div className="flex flex-col md:flex-row items-center gap-3 bg-card p-3 rounded-lg border border-border shadow-2xs">
+        <div className="flex flex-col gap-3 bg-card p-3 rounded-lg border border-border shadow-2xs lg:flex-row lg:items-center">
           {/* Search */}
-          <div className="relative flex-1 w-full">
+          <div className="relative flex-1 w-full min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               value={search}
@@ -148,15 +148,15 @@ export default function LeadsPage() {
           </div>
 
           {/* Filters */}
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
+          <div className="flex items-center gap-2 w-full lg:w-auto flex-wrap sm:flex-nowrap">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap shrink-0">
               <Filter className="h-3.5 w-3.5 text-muted-foreground" />
-              <span>Filters:</span>
+              <span className="hidden sm:inline">Filters:</span>
             </div>
 
             {/* Stage Filter */}
             <Select value={stageFilter} onValueChange={(val) => val && setStageFilter(val)}>
-              <SelectTrigger className="w-[140px] text-xs h-9 bg-muted/30">
+              <SelectTrigger className="flex-1 sm:flex-none sm:w-[140px] text-xs h-9 bg-muted/30 min-w-0">
                 <SelectValue placeholder="All Stages" />
               </SelectTrigger>
               <SelectContent>
@@ -173,7 +173,7 @@ export default function LeadsPage() {
 
             {/* Assigned Agent Filter */}
             <Select value={assignedFilter} onValueChange={(val) => val && setAssignedFilter(val)}>
-              <SelectTrigger className="w-[150px] text-xs h-9 bg-muted/30">
+              <SelectTrigger className="flex-1 sm:flex-none sm:w-[150px] text-xs h-9 bg-muted/30 min-w-0">
                 <SelectValue placeholder="All Agents" />
               </SelectTrigger>
               <SelectContent>

@@ -38,7 +38,8 @@ export function LeadTable({ leads, onStageChange, onBookLead }: LeadTableProps) 
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card shadow-2xs overflow-hidden">
+    <div className="rounded-lg border border-border bg-card shadow-2xs overflow-x-auto">
+      <div className="min-w-[820px]">
       <Table>
         <TableHeader className="bg-muted/50">
           <TableRow>
@@ -139,6 +140,7 @@ export function LeadTable({ leads, onStageChange, onBookLead }: LeadTableProps) 
           ))}
         </TableBody>
       </Table>
+      </div>
     </div>
   );
 }

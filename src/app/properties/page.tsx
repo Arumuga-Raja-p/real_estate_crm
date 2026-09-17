@@ -208,7 +208,7 @@ function PropertiesContent() {
   const addUnitBuildings = buildings.filter((building) => building.project_id === addProjectId);
 
   const inventoryActions = (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
       <Button
         onClick={() => {
           resetAddPropertyForm();
@@ -216,7 +216,7 @@ function PropertiesContent() {
         }}
         variant="outline"
         size="sm"
-        className="h-9 rounded-full border-border bg-card px-4 font-semibold text-xs flex items-center gap-1.5 shadow-2xs"
+        className="h-9 rounded-full border-border bg-card px-4 font-semibold text-xs flex-1 sm:flex-none items-center justify-center gap-1.5 shadow-2xs flex whitespace-nowrap"
       >
         <Plus className="h-3.5 w-3.5" />
         Add Property
@@ -224,7 +224,7 @@ function PropertiesContent() {
       <Button
         onClick={openAddUnitModal}
         size="sm"
-        className="h-9 rounded-full bg-primary text-primary-foreground px-4 font-semibold text-xs flex items-center gap-1.5 shadow-2xs"
+        className="h-9 rounded-full bg-primary text-primary-foreground px-4 font-semibold text-xs flex-1 sm:flex-none items-center justify-center gap-1.5 shadow-2xs flex whitespace-nowrap"
       >
         <Plus className="h-3.5 w-3.5" />
         Add Unit
@@ -237,7 +237,7 @@ function PropertiesContent() {
       onClick={() => setIsConcurrencyModalOpen(true)}
       variant="outline"
       size="sm"
-      className="h-9 rounded-full border-border bg-card text-foreground hover:bg-muted font-semibold text-xs flex items-center gap-1.5 shadow-2xs"
+      className="h-9 rounded-full border-border bg-card text-foreground hover:bg-muted font-semibold text-xs hidden md:flex items-center gap-1.5 shadow-2xs whitespace-nowrap"
     >
       <Zap className="h-3.5 w-3.5 text-foreground" />
       Simulate Concurrency Collision
@@ -249,13 +249,13 @@ function PropertiesContent() {
       title="Inventory & Units"
       actionButton={headerActions}
     >
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-foreground">
+      <div className="space-y-5 sm:space-y-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               Property Inventory
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               Browse projects, towers, floor inventory, and unit reservation status.
             </p>
           </div>
@@ -263,7 +263,7 @@ function PropertiesContent() {
         </div>
 
         {/* Master Projects Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {projects.map((proj) => {
             const isSelected = selectedProjectId === proj.id;
             return (
@@ -311,16 +311,16 @@ function PropertiesContent() {
         </div>
 
         {/* Unit Matrix Filter Bar */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-card p-3 rounded-2xl border border-border/70 shadow-2xs">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold uppercase tracking-wider">
+        <div className="flex flex-col gap-3 bg-card p-3 rounded-2xl border border-border/70 shadow-2xs xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full xl:w-auto">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold uppercase tracking-wider shrink-0 w-full sm:w-auto">
               <Filter className="h-3.5 w-3.5" />
               <span>Filters:</span>
             </div>
 
             {/* Project Filter */}
             <Select value={selectedProjectId} onValueChange={(val) => val && setSelectedProjectId(val)}>
-              <SelectTrigger className="w-[180px] text-xs h-9 rounded-full bg-muted/40 border-transparent">
+              <SelectTrigger className="flex-1 sm:flex-none sm:w-[180px] text-xs h-9 rounded-full bg-muted/40 border-transparent min-w-0">
                 <span className="truncate text-left">{getProjectName(selectedProjectId)}</span>
               </SelectTrigger>
               <SelectContent>
@@ -338,7 +338,7 @@ function PropertiesContent() {
               value={statusFilter}
               onValueChange={(val) => val && setStatusFilter(val as 'All' | 'Available' | 'Booked')}
             >
-              <SelectTrigger className="w-[140px] text-xs h-9 rounded-full bg-muted/40 border-transparent">
+              <SelectTrigger className="flex-1 sm:flex-none sm:w-[140px] text-xs h-9 rounded-full bg-muted/40 border-transparent min-w-0">
                 <span className="truncate text-left">
                   {statusFilter === 'All' ? 'All Status' : statusFilter}
                 </span>
@@ -352,7 +352,7 @@ function PropertiesContent() {
 
             {/* Type Filter */}
             <Select value={typeFilter} onValueChange={(val) => val && setTypeFilter(val)}>
-              <SelectTrigger className="w-[130px] text-xs h-9 rounded-full bg-muted/40 border-transparent">
+              <SelectTrigger className="flex-1 sm:flex-none sm:w-[130px] text-xs h-9 rounded-full bg-muted/40 border-transparent min-w-0">
                 <span className="truncate text-left">
                   {typeFilter === 'All' ? 'All Types' : typeFilter}
                 </span>
@@ -369,7 +369,7 @@ function PropertiesContent() {
           </div>
 
           {/* Availability Counters */}
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-2 text-xs flex-wrap sm:flex-nowrap">
             <span className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-background text-foreground border border-border font-medium">
               <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
               {availableCount} Available
@@ -382,7 +382,7 @@ function PropertiesContent() {
         </div>
 
         {/* Units Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
           {units.length === 0 ? (
             <div className="col-span-full rounded-lg border border-border bg-card p-12 text-center text-muted-foreground text-sm">
               No property units found matching current filter parameters.
@@ -502,7 +502,7 @@ function PropertiesContent() {
       />
 
       <Dialog open={isAddPropertyModalOpen} onOpenChange={(open) => !open && setIsAddPropertyModalOpen(false)}>
-        <DialogContent className="sm:max-w-[560px] p-6">
+        <DialogContent className="sm:max-w-[560px] w-[calc(100vw-2rem)] max-h-[90dvh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Add Property</DialogTitle>
             <DialogDescription>
@@ -611,7 +611,7 @@ function PropertiesContent() {
       </Dialog>
 
       <Dialog open={isAddUnitModalOpen} onOpenChange={(open) => !open && setIsAddUnitModalOpen(false)}>
-        <DialogContent className="sm:max-w-[560px] p-6">
+        <DialogContent className="sm:max-w-[560px] w-[calc(100vw-2rem)] max-h-[90dvh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Add Property Unit</DialogTitle>
             <DialogDescription>

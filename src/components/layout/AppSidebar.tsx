@@ -15,6 +15,7 @@ import {
   ChevronsUpDown,
   FileCode2,
   User,
+  X,
 } from 'lucide-react';
 import { crmService } from '@/lib/crm-service';
 import { Profile } from '@/lib/types/crm';
@@ -30,7 +31,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  open?: boolean;
+  onClose?: () => void;
+}
+
+export function AppSidebar({ open = false, onClose }: AppSidebarProps) {
   const pathname = usePathname();
   const [currentUser, setCurrentUser] = useState<Profile | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -73,9 +79,17 @@ export function AppSidebar() {
   ];
 
   return (
-    <aside className="w-64 border-r border-border/60 bg-background flex flex-col shrink-0 h-screen sticky top-0 select-none">
+    <aside
+      className={`
+        bg-background flex-col shrink-0 select-none border-r border-border/60
+        w-64 xl:w-72 h-screen sticky top-0
+        ${open
+          ? 'flex fixed inset-y-0 left-0 z-50 w-[85vw] max-w-72 shadow-2xl animate-in slide-in-from-left duration-200'
+          : 'hidden'} lg:flex
+      `}
+    >
       {/* Workspace / Brand Header */}
-      <div className="h-20 flex items-center justify-between px-5">
+      <div className="h-16 sm:h-20 flex items-center justify-between px-4 sm:px-5 shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground font-bold shadow-xs">
             <Building2 className="h-5 w-5" />
@@ -94,6 +108,15 @@ export function AppSidebar() {
             </span>
           </div>
         </div>
+        {/* Mobile close button */}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close menu"
+          className="lg:hidden flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition cursor-pointer shrink-0"
+        >
+          <X className="h-4 w-4" />
+        </button>
       </div>
 
       {/* Navigation Sections */}
@@ -111,6 +134,7 @@ export function AppSidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={onClose}
                   className={`flex items-center justify-between px-4 py-3 text-sm font-medium rounded-full transition-colors ${
                     isActive
                       ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
@@ -140,6 +164,7 @@ export function AppSidebar() {
           <div className="space-y-1">
             <Link
               href="/properties?testConcurrency=true"
+              onClick={onClose}
             className="flex items-center justify-between px-4 py-3 text-xs font-medium rounded-full text-foreground bg-muted hover:bg-muted/80 transition-colors"
             >
               <div className="flex items-center gap-2.5">

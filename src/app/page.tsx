@@ -106,7 +106,7 @@ export default function DashboardPage() {
       variant="outline"
       size="sm"
       onClick={() => setIsConcurrencyModalOpen(true)}
-      className="h-9 rounded-full text-xs border-border bg-card text-foreground hover:bg-muted flex items-center gap-1.5 cursor-pointer"
+      className="h-9 rounded-full text-xs border-border bg-card text-foreground hover:bg-muted hidden sm:flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
     >
       <Zap className="h-3.5 w-3.5 text-foreground" />
       Test Concurrency
@@ -118,11 +118,11 @@ export default function DashboardPage() {
       title="Dashboard Overview"
       actionButton={actionButtons}
     >
-      <div className="space-y-7">
+      <div className="space-y-5 sm:space-y-7">
         {/* Page Title & Main Actions Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-foreground">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               Welcome back, {currentUser.full_name.split(' ')[0]}
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -131,18 +131,18 @@ export default function DashboardPage() {
           </div>
 
           {/* Action Buttons: Add Lead & Book Unit */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap sm:flex-nowrap">
             <Button
               variant="outline"
               onClick={() => setIsLeadModalOpen(true)}
-              className="h-10 rounded-full px-5 text-sm font-medium flex items-center gap-2 shadow-2xs hover:bg-muted cursor-pointer transition-colors"
+              className="h-10 rounded-full px-4 sm:px-5 text-sm font-medium flex-1 sm:flex-none items-center justify-center gap-2 shadow-2xs hover:bg-muted cursor-pointer transition-colors flex"
             >
               <Plus className="h-4 w-4" />
               Add Lead
             </Button>
             <Button
               onClick={() => setIsBookingModalOpen(true)}
-              className="h-10 rounded-full px-5 text-sm font-semibold bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-2 shadow-xs cursor-pointer transition-colors"
+              className="h-10 rounded-full px-4 sm:px-5 text-sm font-semibold bg-primary hover:bg-primary/90 text-primary-foreground flex-1 sm:flex-none items-center justify-center gap-2 shadow-xs cursor-pointer transition-colors flex"
             >
               <Sparkles className="h-4 w-4" />
               Book Unit
@@ -151,7 +151,7 @@ export default function DashboardPage() {
         </div>
 
         {/* 4 Signature shadcn Metric Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
           {/* Total Revenue */}
           <Card className="shadow-xs border-border/60">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -237,9 +237,9 @@ export default function DashboardPage() {
         </div>
 
         {/* 2-Column Section: Pipeline Distribution + Recent Bookings */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
           {/* Pipeline Stage Funnel (4 Cols) */}
-          <Card className="col-span-4 shadow-2xs">
+          <Card className="lg:col-span-4 shadow-2xs overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-sm font-semibold text-foreground">
@@ -257,7 +257,7 @@ export default function DashboardPage() {
               </Link>
             </CardHeader>
             <CardContent className="pt-2">
-              <div className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
+              <div className="grid gap-5 grid-cols-1 xl:grid-cols-[1.25fr_0.75fr]">
                 <div className="space-y-2.5">
                   {LEAD_STAGES.map((stage, index) => {
                     const count = metrics.leadsByStage[stage] || 0;
@@ -377,7 +377,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* Right Column: Circle Chart (Top) & Recent Bookings (Bottom) */}
-          <div className="col-span-3 flex flex-col gap-4">
+          <div className="lg:col-span-3 flex flex-col gap-4 min-w-0">
             {/* Sales Pipeline Circle / Donut Chart */}
             <Card className="shadow-2xs">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -399,9 +399,9 @@ export default function DashboardPage() {
                     No leads in pipeline yet.
                   </p>
                 ) : (
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-col sm:flex-row items-center gap-4">
                     {/* Donut Chart */}
-                    <div className="relative h-28 w-28 shrink-0 flex items-center justify-center">
+                    <div className="relative h-28 w-28 shrink-0 flex items-center justify-center mx-auto sm:mx-0">
                       <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
                         <circle
                           cx="50"

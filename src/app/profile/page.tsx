@@ -122,12 +122,12 @@ export default function ProfilePage() {
       title="User Profile & Settings"
       subtitle="Manage your personal information, sales contact details, and display avatar."
     >
-      <div className="max-w-4xl space-y-6">
-        <form onSubmit={handleSave} className="space-y-6">
+      <div className="max-w-4xl space-y-5 sm:space-y-6">
+        <form onSubmit={handleSave} className="space-y-5 sm:space-y-6">
           {/* Main Profile Info Card */}
-          <Card className="shadow-2xs">
+          <Card className="shadow-2xs overflow-hidden">
             <CardHeader className="border-b border-border/60 pb-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 <div>
                   <CardTitle className="text-base font-bold text-foreground">
                     Personal Information
@@ -149,12 +149,12 @@ export default function ProfilePage() {
               </div>
             </CardHeader>
 
-            <CardContent className="p-6 space-y-6">
+            <CardContent className="p-4 sm:p-6 space-y-6">
               {/* Photo / Avatar Section */}
               <div className="space-y-3">
                 <Label className="text-xs font-semibold text-foreground">Profile Photo / Avatar</Label>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                  <Avatar className="h-20 w-20 border-2 border-border shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
+                  <Avatar className="h-20 w-20 border-2 border-border shadow-xs shrink-0 mx-auto sm:mx-0">
                     {avatarUrl ? (
                       <AvatarImage src={avatarUrl} alt={fullName} />
                     ) : null}
@@ -163,10 +163,10 @@ export default function ProfilePage() {
                     </AvatarFallback>
                   </Avatar>
 
-                  <div className="space-y-2 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Pick a preset headshot:</span>
-                      <div className="flex items-center gap-1.5">
+                  <div className="space-y-2 flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">Pick a preset headshot:</span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         {AVATAR_PRESETS.map((preset, idx) => (
                           <button
                             key={idx}
@@ -292,7 +292,7 @@ export default function ProfilePage() {
         </form>
 
         {/* Representative Performance & Details Card */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <Card className="shadow-2xs">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">

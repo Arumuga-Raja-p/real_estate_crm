@@ -100,17 +100,17 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   const headerActions = (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
       <Link href="/leads">
-        <Button variant="outline" size="sm" className="h-8 text-xs flex items-center gap-1.5">
-          <ArrowLeft className="h-3.5 w-3.5" /> Back to Leads
+        <Button variant="outline" size="sm" className="h-8 text-xs flex items-center gap-1.5 whitespace-nowrap">
+          <ArrowLeft className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Back to Leads</span><span className="sm:hidden">Back</span>
         </Button>
       </Link>
       {lead.stage !== 'Booked' && lead.stage !== 'Lost' && (
         <Button
           size="sm"
           onClick={() => setIsBookingModalOpen(true)}
-          className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium flex items-center gap-1.5"
+          className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium flex items-center gap-1.5 whitespace-nowrap"
         >
           <CheckCircle2 className="h-3.5 w-3.5" />
           Book Unit
@@ -125,23 +125,23 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
       subtitle={`Lead Profile • Registered ${new Date(lead.created_at).toLocaleDateString()}`}
       actionButton={headerActions}
     >
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         {/* Top Status Strip */}
-        <div className="flex items-center justify-between p-4 rounded-lg bg-card border border-border shadow-2xs">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-4 rounded-lg bg-card border border-border shadow-2xs">
+          <div className="flex items-center gap-3 flex-wrap min-w-0">
             <StageBadge stage={lead.stage} />
             <span className="text-xs text-muted-foreground">
               Interested in <strong className="text-foreground">{lead.preferred_type || 'Any Unit'}</strong>
             </span>
           </div>
 
-          <div className="text-xs text-muted-foreground">
-            Lead ID: <code className="font-mono text-[11px] bg-muted px-1.5 py-0.5 rounded">{lead.id}</code>
+          <div className="text-xs text-muted-foreground truncate">
+            Lead ID: <code className="font-mono text-[11px] bg-muted px-1.5 py-0.5 rounded break-all">{lead.id}</code>
           </div>
         </div>
 
         {/* 2-Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Left Column: Lead Overview Card */}
           <div className="space-y-6">
             <Card className="shadow-2xs">

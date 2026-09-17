@@ -92,7 +92,7 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[560px] p-6 bg-card text-card-foreground border-border">
+      <DialogContent className="sm:max-w-[560px] w-[calc(100vw-2rem)] max-h-[90dvh] overflow-y-auto p-4 sm:p-6 bg-card text-card-foreground border-border">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
@@ -109,7 +109,7 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           {/* Name Row */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label htmlFor="firstName" className="text-xs font-semibold text-foreground">
                 First Name *
@@ -137,7 +137,7 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
           </div>
 
           {/* Contact Row */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label htmlFor="phone" className="text-xs font-semibold text-foreground">
                 Phone Number *
@@ -165,7 +165,7 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
           </div>
 
           {/* Budget Range */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label htmlFor="budgetMin" className="text-xs font-semibold text-foreground">
                 Min Budget ($)
@@ -191,7 +191,7 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
           </div>
 
           {/* Preferences & Source */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs font-semibold text-foreground">Preferred Unit Type</Label>
               <Select value={preferredType} onValueChange={(val) => val && setPreferredType(val)}>
@@ -227,7 +227,7 @@ export function LeadModal({ isOpen, onClose, onSuccess }: LeadModalProps) {
           </div>
 
           {/* Stage & Sales Assignment */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs font-semibold text-foreground">Pipeline Stage</Label>
               <Select value={stage} onValueChange={(val) => val && setStage(val as LeadStage)}>
